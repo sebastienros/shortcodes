@@ -4,8 +4,8 @@
     <Copyright>Sebastien Ros</Copyright>
     <Authors>Sebastien Ros</Authors>
     <PackageProjectUrl>https://github.com/sebastienros/shortcodes</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/sebastienros/shortcodes/blob/master/LICENSE</PackageLicenseUrl>
-    <VersionSuffix Condition="'$(VersionSuffix)'!='' AND '$(BuildNumber)' != ''">$(VersionSuffix)-$(BuildNumber)</VersionSuffix>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <VersionSuffix Condition="'$(VersionSuffix)'!='' AND '$(GITHUB_RUN_ID)' != ''">$(VersionSuffix)-$(GITHUB_RUN_ID)</VersionSuffix>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>Latest</LangVersion>
