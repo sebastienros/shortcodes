@@ -5,12 +5,15 @@ namespace Shortcodes.Tests
 {
     public class ParserTests
     {
-        private NamedShortcodeProvider _provider = new NamedShortcodeProvider();
+        private NamedShortcodeProvider _provider;
 
         public ParserTests()
         {
-            _provider.Shortcodes["hello"] = (args, content) => new ValueTask<string>("Hello world!");
-            _provider.Shortcodes["named_or_default"] = (args, content) => new ValueTask<string>("Hello " + args.NamedOrDefault("name"));
+            _provider = new NamedShortcodeProvider
+            {
+                ["hello"] = (args, content) => new ValueTask<string>("Hello world!"),
+                ["named_or_default"] = (args, content) => new ValueTask<string>("Hello " + args.NamedOrDefault("name")),
+            };
         }
 
         [Theory]
@@ -36,9 +39,7 @@ namespace Shortcodes.Tests
         [InlineData("a [hello] b", "a Hello world! b")]
         public async Task ProcessShortcodes(string input, string expected)
         {
-            var parser = new ShortcodesProcessor();
-            parser.Providers.Add(_provider);
-
+            var parser = new ShortcodesProcessor(_provider);
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }
 
@@ -48,8 +49,7 @@ namespace Shortcodes.Tests
         [InlineData("[[hello]]", "[[hello]]")]
         public async Task IgnoresIncompleteShortcodes(string input, string expected)
         {
-            var parser = new ShortcodesProcessor();
-            parser.Providers.Add(_provider);
+            var parser = new ShortcodesProcessor(_provider);
 
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }
@@ -58,8 +58,7 @@ namespace Shortcodes.Tests
         [InlineData("[hello]a[/hello]", "Hello world!")]
         public async Task ProcessClosingShortcodes(string input, string expected)
         {
-            var parser = new ShortcodesProcessor();
-            parser.Providers.Add(_provider);
+            var parser = new ShortcodesProcessor(_provider);
 
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }
@@ -69,8 +68,7 @@ namespace Shortcodes.Tests
         [InlineData("[named_or_default 'world!']", "Hello world!")]
         public async Task NamedOrDefaultArguments(string input, string expected)
         {
-            var parser = new ShortcodesProcessor();
-            parser.Providers.Add(_provider);
+            var parser = new ShortcodesProcessor(_provider);
 
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }

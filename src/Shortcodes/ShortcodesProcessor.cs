@@ -6,9 +6,24 @@ namespace Shortcodes
 {
     public class ShortcodesProcessor
     {
-        public List<IShortcodeProvider> Providers = new List<IShortcodeProvider>();
+        public List<IShortcodeProvider> Providers { get; }
 
         public ShortcodesProcessor()
+        {
+            Providers = new List<IShortcodeProvider>();
+        }
+
+        public ShortcodesProcessor(params IShortcodeProvider[] providers)
+        {
+            Providers = new List<IShortcodeProvider>(providers);
+        }
+
+        public ShortcodesProcessor(IEnumerable<IShortcodeProvider> providers)
+        {
+            Providers = new List<IShortcodeProvider>(providers);
+        }
+
+        public ShortcodesProcessor(Dictionary<string, ShortcodeDelegate> shortcodes) : this (new NamedShortcodeProvider(shortcodes))
         {
         }
 
