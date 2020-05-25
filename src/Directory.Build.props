@@ -1,0 +1,15 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <PackageId>Shortcodes</PackageId>
+    <Title>Shortcodes processor for .NET</Title>
+    <Description>Shortcodes processor for .NET with focus on performance and simplicity.</Description>
+    <PackageTags>shortcode;template;</PackageTags>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>beta</VersionSuffix>
+  </PropertyGroup>
+
+  <!-- Called after so that the <VersionSuffix> is built after the local ones -->
+  <Import Project="../Common.props"/>
+
+</Project>
