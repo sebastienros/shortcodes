@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Shortcodes
 {
@@ -20,6 +19,6 @@ namespace Shortcodes
         public string Identifier { get; }
         public ShortcodeStyle Style { get; }
         public string Content { get; set; }
-        public Dictionary<string, string> Arguments { get; set; }
+        public Arguments Arguments { get; set; }
     }
 }

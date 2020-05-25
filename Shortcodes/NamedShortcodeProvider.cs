@@ -14,7 +14,7 @@ namespace Shortcodes
         {
         }
 
-        public ValueTask<string> EvaluateAsync(string identifier, Dictionary<string, string> arguments, string content)
+        public ValueTask<string> EvaluateAsync(string identifier, Arguments arguments, string content)
         {
             if (Shortcodes.TryGetValue(identifier, out var shortcode))
             {

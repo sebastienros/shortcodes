@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
@@ -26,7 +26,7 @@ namespace Shortcodes.Tests
 
                         _builder.Append(shortcode.Identifier);
 
-                        if (shortcode.Arguments?.Count > 0)
+                        if (shortcode.Arguments.Any())
                         {
                             foreach (var argument in shortcode.Arguments)
                             {
@@ -108,6 +108,8 @@ namespace Shortcodes.Tests
         [Theory]
         [InlineData("[hello a='b']", "[hello a=b]")]
         [InlineData("[hello a='b' c=\"d\"]", "[hello a=b c=d]")]
+        [InlineData("[hello 'a']", "[hello 0=a]")]
+        [InlineData("[hello 'a' b='c' 'd']", "[hello 0=a b=c 1=d]")]
         public void ShouldScanArguments(string input, string encoded)
         {
             var scanner = new Scanner(input);
@@ -128,5 +130,54 @@ namespace Shortcodes.Tests
 
             Assert.Equal(encoded, result);
         }
+
+        [Theory]
+        [InlineData("[h a='\\u03A9']", "[h a=Ω]")]
+        [InlineData("[h a='\\xe9']", "[h a=é]")]
+        [InlineData("[h a='\\xE9']", "[h a=é]")]
+        [InlineData("[h a='\\a']", "R(10)")]
+        [InlineData("[h a='\\0']", "[h a=\0]")]
+        [InlineData("[h a='\\\\']", "[h a=\\]")]
+        [InlineData("[h a='\\\"']", "[h a=\"]")]
+        [InlineData("[h a='\\\'']", "[h a=']")]
+        [InlineData("[h a='\\b']", "[h a=\b]")]
+        [InlineData("[h a='\\f']", "[h a=\f]")]
+        [InlineData("[h a='\\n']", "[h a=\n]")]
+        [InlineData("[h a='\\r']", "[h a=\r]")]
+        [InlineData("[h a='\\t']", "[h a=\t]")]
+        [InlineData("[h a='\\v']", "[h a=\v]")]
+        public void ShouldEscapeStrings(string input, string encoded)
+        {
+            var scanner = new Scanner(input);
+            var nodes = scanner.Scan();
+            var result = EncodeNodes(nodes);
+
+            Assert.Equal(encoded, result);
+        }
+
+        [Theory]
+        [InlineData("[h a='\\u0']", "R(11)")]
+        [InlineData("[h a='\\xe']", "R(11)")]
+        public void ShouldNotParseInvalidEscapeSequence(string input, string encoded)
+        {
+            var scanner = new Scanner(input);
+            var nodes = scanner.Scan();
+            var result = EncodeNodes(nodes);
+
+            Assert.Equal(encoded, result);
+        }
+
+        [Theory]
+        [InlineData("[h a='\"']", "[h a=\"]")]
+        [InlineData("[h a=\"'\"]", "[h a=']")]
+        public void ShouldStringsWitBothQuotes(string input, string encoded)
+        {
+            var scanner = new Scanner(input);
+            var nodes = scanner.Scan();
+            var result = EncodeNodes(nodes);
+
+            Assert.Equal(encoded, result);
+        }
+
     }
 }

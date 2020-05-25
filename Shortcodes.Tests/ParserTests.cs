@@ -10,6 +10,7 @@ namespace Shortcodes.Tests
         public ParserTests()
         {
             _provider.Shortcodes["hello"] = (args, content) => new ValueTask<string>("Hello world!");
+            _provider.Shortcodes["named_or_default"] = (args, content) => new ValueTask<string>("Hello " + args.NamedOrDefault("name"));
         }
 
         [Theory]
@@ -56,6 +57,17 @@ namespace Shortcodes.Tests
         [Theory]
         [InlineData("[hello]a[/hello]", "Hello world!")]
         public async Task ProcessClosingShortcodes(string input, string expected)
+        {
+            var parser = new ShortcodesProcessor();
+            parser.Providers.Add(_provider);
+
+            Assert.Equal(expected, await parser.EvaluateAsync(input));
+        }
+
+        [Theory]
+        [InlineData("[named_or_default name='world!']", "Hello world!")]
+        [InlineData("[named_or_default 'world!']", "Hello world!")]
+        public async Task NamedOrDefaultArguments(string input, string expected)
         {
             var parser = new ShortcodesProcessor();
             parser.Providers.Add(_provider);

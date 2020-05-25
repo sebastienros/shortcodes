@@ -43,12 +43,12 @@ namespace Shortcodes
         /// <returns>Whether some white space was read.</returns>
         public bool SkipWhiteSpace()
         {
-            if (!IsWhiteSpace())
+            if (!Character.IsWhiteSpace(_cursor.Char))
             {
                 return false;
             }
 
-            while (IsWhiteSpace())
+            while (Character.IsWhiteSpace(_cursor.Char))
             {
                 _cursor.Advance();
             }
@@ -63,48 +63,18 @@ namespace Shortcodes
             OnToken?.Invoke(_token);
         }
 
-        public bool IsHex()
-        {
-            return Uri.IsHexDigit(_cursor.Char);
-        }
-
-        public bool IsWhiteSpace()
-        {
-            const char NonBreakingSpace = (char)160;
-
-            switch (_cursor.Char)
-            {
-                case ' ':
-                case '\t':
-                case NonBreakingSpace:
-                case '\r':
-                case '\n':
-                case '\v':
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public bool IsIdentifier()
-        {
-            var ch = _cursor.Char;
-
-            return
-                (ch >= 'A' && ch <= 'Z') ||
-                (ch >= 'a' && ch <= 'z');
-        }
-
         public bool ReadIdentifier()
         {
             var start = _cursor.Offset;
 
-            if (!IsIdentifier())
+            if (!Character.IsIdentifierStart(_cursor.Char))
             {
                 return false;
             }
 
-            while (IsIdentifier())
+            _cursor.Advance();
+
+            while (Character.IsIdentifierPart(_cursor.Char))
             {
                 _cursor.Advance();
             }
@@ -206,38 +176,52 @@ namespace Shortcodes
 
             Dictionary<string, string> arguments = null;
 
+            int argumentIndex = 0;
+
             // Arguments?
-            while (ReadIdentifier())
+            while (ReadIdentifier() || ReadString())
             {
-                var argument = _token;
-
-                SkipWhiteSpace();
-
-                if (!ReadEqualSign())
+                // Is it a positioned argument?
+                if (_token.Type == "string")
                 {
-                    DiscardCursor();
-
-                    return false;
-                }
-
-                SkipWhiteSpace();
-
-                if (ReadString())
-                {
-                    var value = _token;
-
                     arguments ??= new Dictionary<string, string>();
 
-                    arguments[argument.ToString()] = DecodeString(value.ToString());
+                    arguments[argumentIndex.ToString()] = DecodeString(_token.ToString());
+
+                    argumentIndex += 1;
+
+                    SkipWhiteSpace();
                 }
                 else
                 {
-                    DiscardCursor();
+                    var argument = _token;
 
-                    return false;
+                    SkipWhiteSpace();
+
+                    if (!ReadEqualSign())
+                    {
+                        DiscardCursor();
+
+                        return false;
+                    }
+
+                    SkipWhiteSpace();
+
+                    if (ReadString())
+                    {
+                        arguments ??= new Dictionary<string, string>();
+
+                        arguments[argument.ToString()] = DecodeString(_token.ToString());
+                    }
+                    else
+                    {
+                        DiscardCursor();
+
+                        return false;
+                    }
+
+                    SkipWhiteSpace();
                 }
-
-                SkipWhiteSpace();
             }
 
             // Is it a self-closing tag?
@@ -265,7 +249,7 @@ namespace Shortcodes
             }
 
             shortcode = new Shortcode(identifier.ToString(), style);
-            shortcode.Arguments = arguments;
+            shortcode.Arguments = new Arguments(arguments);
 
             PromoteCursor();
 
@@ -286,15 +270,15 @@ namespace Shortcodes
 
         public bool ReadString()
         {
-            if (_cursor.Char != '\'' && _cursor.Char != '"')
-            {
-                return false;
-            }
-
             var start = _cursor.Offset;
 
             var startChar = _cursor.Char;
 
+            if (startChar != '\'' && startChar != '"')
+            {
+                return false;
+            }
+            
             _cursor.Advance();
 
             while (_cursor.Char != startChar)
@@ -308,8 +292,6 @@ namespace Shortcodes
                 {
                     _cursor.Advance();
 
-                    var success = false;
-
                     switch (_cursor.Char)
                     {
                         case '0':
@@ -322,47 +304,54 @@ namespace Shortcodes
                         case 'r':
                         case 't':
                         case 'v':
-                            _cursor.Advance();
                             break;
                         case 'u':
+                            var isValidUnicode = false;
+
                             _cursor.Advance();
 
-                            if (IsHex())
+                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
                             {
                                 _cursor.Advance();
-                                if (IsHex())
+                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
                                 {
                                     _cursor.Advance();
-                                    if (IsHex())
+                                    if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
                                     {
                                         _cursor.Advance();
-                                        success = true;
+                                        isValidUnicode = true;
                                     }
                                 }
                             }
 
-                            if (!success)
+                            if (!isValidUnicode)
                             {
                                 return false;
                             }
 
                             break;
                         case 'x':
+                            bool isValidHex = false;
+
                             _cursor.Advance();
 
-                            if (IsHex())
+                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
                             {
                                 _cursor.Advance();
-                                if (IsHex())
+                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
                                 {
-                                    success = true;
+                                    isValidHex = true;
                                 }
                             }
-                            if (!success)
+
+                            if (!isValidHex)
                             {
                                 return false;
                             }
+
                             break;
+                        default:
+                            return false;
                     }
                 }
 
@@ -371,17 +360,22 @@ namespace Shortcodes
 
             _cursor.Advance();
 
-            EmitToken("string", start, _cursor.Offset - start);
+            EmitToken("string", start + 1, _cursor.Offset - start - 2);
 
             return true;
         }
 
         public string DecodeString(string text)
         {
+            // Nothing to do if the string doesn't have any escape char
+            if (text.IndexOf('\\') == -1)
+            {
+                return text;
+            }
+
             var sb = GetStringBuilder();
 
-            // Skip quotes
-            for (var i = 1; i < text.Length - 1; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 var c = text[i];
 
@@ -403,8 +397,12 @@ namespace Shortcodes
                         case 't': sb.Append("\t"); break;
                         case 'v': sb.Append("\v"); break;
                         case 'u':
+                            sb.Append(Character.ScanHexEscape(text, i));
+                            i = i + 4;
+                            break;
                         case 'x':
-                            sb.Append(ScanHexEscape(text, i));
+                            sb.Append(Character.ScanHexEscape(text, i));
+                            i = i + 2;
                             break;
                     }
                 }
@@ -415,45 +413,6 @@ namespace Shortcodes
             }
 
             return sb.ToString();
-        }
-
-        public char ScanHexEscape(string text, int index)
-        {
-            var prefix = text[index];
-            var len = (prefix == 'u') ? 4 : 2;
-            var code = 0;
-
-            for (var i = index + 1; i < len + index + 1; ++i)
-            {
-                var d = text[i];
-                code = code * 16 + HexValue(d);
-            }
-
-            return (char)code;
-        }
-
-        private static int HexValue(char ch)
-        {
-            if (ch >= 'A')
-            {
-                if (ch >= 'a')
-                {
-                    if (ch <= 'h')
-                    {
-                        return ch - 'a' + 10;
-                    }
-                }
-                else if (ch <= 'H')
-                {
-                    return ch - 'A' + 10;
-                }
-            }
-            else if (ch <= '9')
-            {
-                return ch - '0';
-            }
-
-            return 0;
         }
 
         private StringBuilder GetStringBuilder()
