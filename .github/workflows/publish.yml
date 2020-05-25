@@ -3,9 +3,6 @@ name: Publish
 on:
   push:
     branches: [ release/1.x ]
-    paths-ignore:
-    - 'doc/**'
-    - 'readme.md'
 
 jobs:
   build:
