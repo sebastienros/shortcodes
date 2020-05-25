@@ -29,7 +29,7 @@ using Shortcodes;
 ### Predefined shortcodes
 
 ```c#
-var processor = new ShortcodesProcess(new NamedShortcodeProvider
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["hello"] = (args, content) => new ValueTask<string>("Hello world!")
 });
@@ -48,7 +48,7 @@ This is an Hello world!
 Arguments need to be quoted either with `'` or `"`.
 
 ```c#
-var processor = new ShortcodesProcess(new NamedShortcodeProvider
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
@@ -66,7 +66,7 @@ Console.WriteLine(await process.EvaluateAsync("[bold text='bold text']"));
 Shortcodes using opening and closing tags can access their inner content.
 
 ```c#
-var processor = new ShortcodesProcess(new NamedShortcodeProvider
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
@@ -82,7 +82,7 @@ Console.WriteLine(await process.EvaluateAsync("[bold]bold text[/bold]"));
 If an argument doesn't have a name, an default index can be used.
 
 ```c#
-var processor = new ShortcodesProcess(new NamedShortcodeProvider
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
