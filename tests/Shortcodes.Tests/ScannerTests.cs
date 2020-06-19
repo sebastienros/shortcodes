@@ -180,5 +180,23 @@ namespace Shortcodes.Tests
             Assert.Equal(encoded, result);
         }
 
+        [Theory]
+        [InlineData("[hello a='b']", "[hello a=b]")]
+        [InlineData("[[hello a='b']]", "[hello a=b]")]
+        [InlineData("[[[hello a='b']]]", "[hello a=b]")]
+        [InlineData("[hello a='b']]", "[hello a=b]")]
+        [InlineData("[hello a='b']]]", "[hello a=b]")]
+        [InlineData("[hello a='b']]]]", "[hello a=b]")]
+        [InlineData("[[hello a='b']", "[hello a=b]")]
+        [InlineData("[[[hello a='b']", "[hello a=b]")]
+        [InlineData("[[[[hello a='b']", "[hello a=b]")]
+        public void ShouldIncludeOpenAndCloseBraces(string input, string encoded)
+        {
+            var scanner = new Scanner(input);
+            var nodes = scanner.Scan();
+            var result = EncodeNodes(nodes);
+
+            Assert.Equal(encoded, result);
+        }
     }
 }

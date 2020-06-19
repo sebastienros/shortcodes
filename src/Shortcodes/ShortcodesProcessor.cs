@@ -42,10 +42,10 @@ namespace Shortcodes
             var scanner = new Scanner(input);
             var nodes = scanner.Scan();
 
-            return await FoldClosingTagsAsync(nodes, 0, nodes.Count);
+            return await FoldClosingTagsAsync(input, nodes, 0, nodes.Count);
         }
 
-        private async ValueTask<string> FoldClosingTagsAsync(List<Node> nodes, int index, int length)
+        private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length)
         {
             // This method should not be called when nodes has a single RawText element.
             // It's implementation assumes at least two nodes are provided.
@@ -129,30 +129,58 @@ namespace Shortcodes
                 if (end == null)
                 {
                     cursor = head + 1;
-                    sb.Builder.Append(await RenderAsync(start));
+
+                    // If there are more than one open/close brace we don't evaluate the shortcode
+                    if (start.OpenBraces > 1 || start.CloseBraces > 1)
+                    {
+                        // We need to escape the braces if counts match 
+                        var bracesToSkip = start.OpenBraces == start.CloseBraces ? 1 : 0;
+                        
+                        sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
+                        sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, start.SourceLength - start.CloseBraces - start.OpenBraces + 1));
+                        sb.Builder.Append(']', start.CloseBraces - bracesToSkip);
+                    }
+                    else
+                    {
+                        sb.Builder.Append(await RenderAsync(start));
+                    }
                 }
                 else
                 {
-                    // Are the tags adjacent?
-                    if (tail - head == 1)
+                    // If the braces are unbalanced we can't render the shortcode
+                    var canRenderShortcode = start.OpenBraces == 1 && start.CloseBraces == 1 && end.OpenBraces == 1 && end.CloseBraces == 1;
+
+                    if (canRenderShortcode)
                     {
-                        start.Content = "";
-                        sb.Builder.Append(await RenderAsync(start));
+                        // Are the tags adjacent?
+                        if (tail - head == 1)
+                        {
+                            start.Content = "";
+                            sb.Builder.Append(await RenderAsync(start));
+                        }
+                        // Is there a single Raw text between the tags?
+                        else if (tail - head == 2)
+                        {
+                            var content = nodes[head+1] as RawText;
+                            start.Content = content.Text;
+                            sb.Builder.Append(await RenderAsync(start));
+                        }
+                        // Fold the inner nodes
+                        else
+                        {
+                            var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1);
+                            start.Content = content;
+                            sb.Builder.Append(await RenderAsync(start));
+                        }        
                     }
-                    // Is there a single Raw text between the tags?
-                    else if (tail - head == 2)
-                    {
-                        var content = nodes[head+1] as RawText;
-                        start.Content = content.Text;
-                        sb.Builder.Append(await RenderAsync(start));
-                    }
-                    // Fold the inner nodes
                     else
                     {
-                        var content = await FoldClosingTagsAsync(nodes, head + 1, tail - head - 1);
-                        start.Content = content;
-                        sb.Builder.Append(await RenderAsync(start));
-                    }                    
+                        var bracesToSkip = start.OpenBraces == end.CloseBraces ? 1 : 0;
+
+                        sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
+                        sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, end.SourceIndex + end.SourceLength - end.CloseBraces - start.SourceIndex - start.OpenBraces + 1));
+                        sb.Builder.Append(']', end.CloseBraces - bracesToSkip);
+                    }        
                 }
             }
             
