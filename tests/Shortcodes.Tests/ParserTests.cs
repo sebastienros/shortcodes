@@ -124,13 +124,24 @@ namespace Shortcodes.Tests
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }
 
-        [Theory]
-        [InlineData("[positional '1' 'b' c='d' '123']", "0:1;1:b;2:;3:123;")]
-        public async Task GetsArgumentsByPosition(string input, string expected)
+        [Fact]
+        public async Task PositionalArgumentMixedWithNamedArguments()
         {
-            var parser = new ShortcodesProcessor(_provider);
+            var provider = new NamedShortcodeProvider
+            {
+                ["hello"] = (args, content) => 
+                {
+                    Assert.Equal("1", args.At(0));
+                    Assert.Equal("b", args.At(1));
+                    Assert.Equal("d", args.Named("c"));
+                    Assert.Equal("123", args.At(2));
 
-            Assert.Equal(expected, await parser.EvaluateAsync(input));
+                    return new ValueTask<string>("");
+                }
+            };
+            
+            var parser = new ShortcodesProcessor(_provider);
+            await parser.EvaluateAsync("[hello '1' 'b' c='d' '123']");
         }        
     }
 }

@@ -102,42 +102,26 @@ Console.WriteLine(await process.EvaluateAsync("[bold 'bold text']"));
 <b>bold text</b>
 ```
 
-All arguments are also available by their position. The first argument is at position `0`.
+Named and positional arguments can be mixed together. Each time an argument doesn't
+have a name, the index is incremented.
+
 
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
-        var text = args.At(1);
+        var text = args.At(0);
         
         return new ValueTask<string>($"<b>{text}</b>");
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold 'a' 'b' 'c']"));
+Console.WriteLine(await process.EvaluateAsync("[bold id='a' 'some text']"));
 ```
 
 ```
-<b>b</b>
-```
-
-### Positional arguments
-
-If an argument doesn't have a name, an default index can be used.
-
-```c#
-var processor = new ShortcodesProcessor(new NamedShortcodeProvider
-{
-    ["bold"] = (args, content) => 
-    {
-        var text = args.NamedOrDefault("text");
-        
-        return new ValueTask<string>($"<b>{text}</b>");
-    }
-});
-
-Console.WriteLine(await process.EvaluateAsync("[bold 'bold text']"));
+<b>some text</b>
 ```
 
 ### Escaping tags

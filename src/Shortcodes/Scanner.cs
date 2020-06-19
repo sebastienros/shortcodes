@@ -193,7 +193,9 @@ namespace Shortcodes
                 {
                     arguments ??= new Dictionary<string, string>();
 
-                    arguments[arguments.Count.ToString()] = DecodeString(_token.ToString());
+                    arguments[argumentIndex.ToString()] = DecodeString(_token.ToString());
+
+                    argumentIndex += 1;
 
                     SkipWhiteSpace();
                 }
@@ -216,9 +218,7 @@ namespace Shortcodes
                     {
                         arguments ??= new Dictionary<string, string>();
 
-                        var decodedString = DecodeString(_token.ToString());
-                        arguments[argument.ToString()] = decodedString;
-                        arguments[arguments.Count.ToString()] = decodedString;
+                        arguments[argument.ToString()] = DecodeString(_token.ToString());
                     }
                     else
                     {
