@@ -13,6 +13,7 @@ namespace Shortcodes.Tests
             {
                 ["hello"] = (args, content) => new ValueTask<string>("Hello world!"),
                 ["named_or_default"] = (args, content) => new ValueTask<string>("Hello " + args.NamedOrDefault("name")),
+                ["upper"] = (args, content) => new ValueTask<string>(content.ToUpperInvariant()),
             };
         }
 
@@ -72,5 +73,19 @@ namespace Shortcodes.Tests
 
             Assert.Equal(expected, await parser.EvaluateAsync(input));
         }
+
+        [Theory]
+        [InlineData("[upper]lorem[/upper]", "LOREM")]
+        [InlineData("[upper]lorem[/upper] [upper]ipsum[/upper]", "LOREM IPSUM")]
+        [InlineData("[upper]lorem [upper]ipsum[/upper][/upper]", "LOREM IPSUM")]
+        [InlineData("[upper]lorem [hello][/upper]", "LOREM HELLO WORLD!")]
+        [InlineData("[upper]lorem [upper]ipsum[/upper] [upper]dolor[/upper][/upper]", "LOREM IPSUM DOLOR")]
+        [InlineData("[upper][/upper]", "")]
+        public async Task FoldsRecursiceShortcodes(string input, string expected)
+        {
+            var parser = new ShortcodesProcessor(_provider);
+
+            Assert.Equal(expected, await parser.EvaluateAsync(input));
+        }        
     }
 }

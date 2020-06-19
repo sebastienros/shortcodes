@@ -42,60 +42,158 @@ namespace Shortcodes
             var scanner = new Scanner(input);
             var nodes = scanner.Scan();
 
-            // Fold all closing tags
-            // [a] [b]text[hr][/b] => [a] [b]{text<hr>} 
-
-            while (await FoldClosingTagsAsync(nodes)) ;
-
-            using (var sb = StringBuilderPool.GetInstance())
-            {
-                foreach (var node in nodes)
-                {
-                    sb.Builder.Append(await RenderAsync(node));
-                }
-
-                return sb.ToString();
-            }
+            return await FoldClosingTagsAsync(nodes, 0, nodes.Count);
         }
 
-        private async ValueTask<bool> FoldClosingTagsAsync(List<Node> nodes)
+        private async ValueTask<string> FoldClosingTagsAsync(List<Node> nodes, int index, int length)
         {
-            for (var j = nodes.Count - 1; j >= 0; j--)
+            // This method should not be called when nodes has a single RawText element.
+            // It's implementation assumes at least two nodes are provided.
+
+            using var sb = StringBuilderPool.GetInstance();
+
+            // The index of the next shortcode opening node
+            var cursor = index;
+
+            // Process the list 
+            while (cursor <= index + length - 1)
             {
-                if (nodes[j] is Shortcode end && end.Style == ShortcodeStyle.Close)
+                Shortcode start = null;
+                var head = 0;
+                var tail = 0;
+    
+                // Find the next opening tag
+                while (cursor < nodes.Count && start == null)
                 {
-                    // Found an end tag
-                    for (var i = 0; i < j; i++)
+                    var node = nodes[cursor];
+
+                    if (node is Shortcode shortCode)
                     {
-                        if (nodes[i] is Shortcode start && start.Style == ShortcodeStyle.Open && String.Equals(start.Identifier, end.Identifier, StringComparison.OrdinalIgnoreCase))
+                        if (shortCode.Style == ShortcodeStyle.Open)
                         {
-                            var text = "";
+                            head = cursor;
+                            start = shortCode;
+                        }
+                    }
+                    else
+                    {
+                        var text = node as RawText;
 
-                            // Don't instantiate a builder if there is no inner node 
-                            if (i < j - 1)
+                        sb.Builder.Append(text.Text);
+                    }
+
+                    cursor += 1;
+                }
+
+                // if start is null, then there is nothing to fold
+                if (start == null)
+                {
+                    return sb.Builder.ToString();
+                }
+
+                Shortcode end = null;
+
+                var depth = 1;
+
+                // Find a matching closing tag
+                while (cursor <= index + length - 1 && end == null)
+                {
+                    if (nodes[cursor] is Shortcode shortCode)
+                    {
+                        if (String.Equals(start.Identifier, shortCode.Identifier, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (shortCode.Style == ShortcodeStyle.Open)
                             {
-                                using (var sb = StringBuilderPool.GetInstance())
-                                {
-                                    for (var k = i + 1; k < j; k++)
-                                    {
-                                        sb.Builder.Append(await RenderAsync(nodes[k]));
-                                    }
+                                // We need to count all opening shortcodes matching the start to account for:
+                                // [a] [a] [/a] [/a]
 
-                                    text = sb.ToString();
+                                depth += 1;
+                            }
+                            else
+                            {
+                                depth -= 1;
+                                
+                                if (depth == 0)
+                                {
+                                    tail = cursor;
+                                    end = shortCode;
                                 }
                             }
-
-                            nodes.RemoveRange(i + 1, j - i);
-
-                            start.Content = text;
-
-                            return true;
                         }
+                    }
+
+                    cursor += 1;
+                }
+
+                // Is is a single tag?
+                if (end == null)
+                {
+                    cursor = head + 1;
+                    sb.Builder.Append(await RenderAsync(start));
+                }
+                else
+                {
+                    // Are the tags adjacent?
+                    if (tail - head == 1)
+                    {
+                        start.Content = "";
+                        sb.Builder.Append(await RenderAsync(start));
+                    }
+                    // Is there a single Raw text between the tags?
+                    else if (tail - head == 2)
+                    {
+                        var content = nodes[head+1] as RawText;
+                        start.Content = content.Text;
+                        sb.Builder.Append(await RenderAsync(start));
+                    }
+                    // Fold the inner nodes
+                    else
+                    {
+                        var content = await FoldClosingTagsAsync(nodes, head + 1, tail - head - 1);
+                        start.Content = content;
+                        sb.Builder.Append(await RenderAsync(start));
                     }                    
                 }
             }
+            
+            return sb.Builder.ToString();
+            
+        //     for (var j = nodes.Count - 1; j >= 0; j--)
+        //     {
+        //         if (nodes[j] is Shortcode end && end.Style == ShortcodeStyle.Close)
+        //         {
+        //             // Found an end tag
+        //             for (var i = 0; i < j; i++)
+        //             {
+        //                 if (nodes[i] is Shortcode start && start.Style == ShortcodeStyle.Open && String.Equals(start.Identifier, end.Identifier, StringComparison.OrdinalIgnoreCase))
+        //                 {
+        //                     var text = "";
 
-            return false;
+        //                     // Don't instantiate a builder if there is no inner node 
+        //                     if (i < j - 1)
+        //                     {
+        //                         using (var sb = StringBuilderPool.GetInstance())
+        //                         {
+        //                             for (var k = i + 1; k < j; k++)
+        //                             {
+        //                                 sb.Builder.Append(await RenderAsync(nodes[k]));
+        //                             }
+
+        //                             text = sb.ToString();
+        //                         }
+        //                     }
+
+        //                     nodes.RemoveRange(i + 1, j - i);
+
+        //                     start.Content = text;
+
+        //                     return true;
+        //                 }
+        //             }                    
+        //         }
+        //     }
+
+        //     return false;
         }
 
         public async ValueTask<string> RenderAsync(Node node)
