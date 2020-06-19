@@ -96,6 +96,7 @@ namespace Shortcodes.Tests
         [InlineData("[hello][/hello]", "[hello][/hello]")]
         [InlineData("[hello] [/hello]", "[hello]R(1)[/hello]")]
         [InlineData("a[hello]b[/hello]c", "R(1)[hello]R(1)[/hello]R(1)")]
+        [InlineData("a[hello]b[/hello]c[hello]d[/hello]e", "R(1)[hello]R(1)[/hello]R(1)[hello]R(1)[/hello]R(1)")]
         public void ShouldScanMixedTags(string input, string encoded)
         {
             var scanner = new Scanner(input);

@@ -113,8 +113,6 @@ namespace Shortcodes
                         nodes.Add(shortcode);
 
                         start = _cursor.Offset + 1;
-
-                        PromoteCursor();
                     }
                 }
                 else
