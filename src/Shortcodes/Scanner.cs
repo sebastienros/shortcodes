@@ -98,12 +98,7 @@ namespace Shortcodes
 
                 if (_cursor.Char == '[')
                 {
-                    if (_cursor.PeekNext() == '[')
-                    {
-                        _cursor.Advance();
-                        _cursor.Advance();
-                    }
-                    else if (ReadShortcode(out var shortcode))
+                    if (ReadShortcode(out var shortcode))
                     {
                         if (startShortcode - start > 0)
                         {
@@ -112,7 +107,7 @@ namespace Shortcodes
 
                         nodes.Add(shortcode);
 
-                        start = _cursor.Offset + 1;
+                        start = _cursor.Offset;
                     }
                 }
                 else
@@ -131,6 +126,12 @@ namespace Shortcodes
 
         public bool ReadShortcode(out Shortcode shortcode)
         {
+            // Number of opening braces
+            var openBraces = 0;
+
+            // Number of closing braces
+            var closeBraces = 0;
+            
             shortcode = null;
             var style = ShortcodeStyle.Open;
 
@@ -141,7 +142,15 @@ namespace Shortcodes
 
             CreateCursor();
 
-            _cursor.Advance();
+            // Start position of the shortcode
+            var index = _cursor.Offset;
+
+            // Read all '[' so we can detect escaped tags
+            do 
+            {
+                openBraces += 1;
+                _cursor.Advance();
+            } while (_cursor.Char == '[');
 
             // Is it a closing tag?
             if (_cursor.Char == '/')
@@ -238,15 +247,14 @@ namespace Shortcodes
                 return false;
             }
 
-            // Ignore shortcode if the next char is also ']', making it a comment
-            if (_cursor.PeekNext() == ']')
+            // Read all ']' so we can detect escaped tags
+            do 
             {
-                DiscardCursor();
+                closeBraces += 1;
+                _cursor.Advance();
+            } while (_cursor.Char == ']');
 
-                return false;
-            }
-
-            shortcode = new Shortcode(identifier.ToString(), style);
+            shortcode = new Shortcode(identifier.ToString(), style, openBraces, closeBraces, index, _cursor.Offset - index - 1);
             shortcode.Arguments = new Arguments(arguments);
 
             PromoteCursor();

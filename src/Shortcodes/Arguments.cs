@@ -38,15 +38,22 @@ namespace Shortcodes
             return null;
         }
 
-        public string NamedOrDefault(string index)
+        public string NamedOrDefault(string name)
         {
-            return Named(index) ?? Named("0");
+            return Named(name) ?? Named("0");
+        }
+
+        public string NamedOrAt(string name, int index)
+        {
+            return Named(name) ?? Named(index.ToString());
         }
 
         public string At(int index)
         {
             return Named(index.ToString());
         }
+
+        public int Count => _arguments.Count;
 
         IEnumerator IEnumerable.GetEnumerator()
         {

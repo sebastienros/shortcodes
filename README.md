@@ -52,7 +52,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
-        var text = arts.Named("text");
+        var text = args.Named("text");
         
         return new ValueTask<string>($"<b>{text}</b>");
     }
@@ -77,6 +77,9 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 Console.WriteLine(await process.EvaluateAsync("[bold]bold text[/bold]"));
 ```
 
+For single tags, the content is `null`. It means that you can detect if a shortcode was
+used with a closing tag, even if the inner content is empty.
+
 ### Positional arguments
 
 If an argument doesn't have a name, an default index can be used.
@@ -86,11 +89,88 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
     ["bold"] = (args, content) => 
     {
-        var text = arts.NamedOrDefault("text");
+        var text = args.NamedOrDefault("text");
         
         return new ValueTask<string>($"<b>{text}</b>");
     }
 });
 
 Console.WriteLine(await process.EvaluateAsync("[bold 'bold text']"));
+```
+
+```
+<b>bold text</b>
+```
+
+Named and positional arguments can be mixed together. Each time an argument doesn't
+have a name, the index is incremented.
+
+
+```c#
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
+{
+    ["bold"] = (args, content) => 
+    {
+        var text = args.At(0);
+        
+        return new ValueTask<string>($"<b>{text}</b>");
+    }
+});
+
+Console.WriteLine(await process.EvaluateAsync("[bold id='a' 'some text']"));
+```
+
+```
+<b>some text</b>
+```
+
+### Escaping tags
+
+In case you want to render a shortcode instead of evaluating it, you can double the 
+opening and closing braces.
+
+```
+[[bold] some text to show [/bold]]
+```
+
+Will then be rendered as 
+
+```
+[bold] some text to show [/bold]
+```
+
+And for single tags:
+
+```
+[[bold 'text']]
+```
+
+Will be rendered as 
+
+```
+[bold 'text']
+```
+
+In case several braces are used, and they are balanced, a single one will be escaped.
+
+```
+[[[bold 'text']]]
+```
+
+Will be rendered as:
+
+```
+[[bold 'text']]
+```
+
+Not that unbalanced braces won't be escaped.
+
+```
+[[[[bold 'text']]
+```
+
+Will be rendered as
+
+```
+[[[[bold 'text']]
 ```
