@@ -111,6 +111,7 @@ namespace Shortcodes.Tests
         [InlineData("[hello a='b' c=\"d\"]", "[hello a=b c=d]")]
         [InlineData("[hello 'a']", "[hello 0=a]")]
         [InlineData("[hello 'a' b='c' 'd']", "[hello 0=a b=c 1=d]")]
+        [InlineData("[hello 123]", "[hello 0=123]")]
         public void ShouldScanArguments(string input, string encoded)
         {
             var scanner = new Scanner(input);
@@ -122,7 +123,7 @@ namespace Shortcodes.Tests
 
         [Theory]
         [InlineData("[hello a='b]", "R(12)")]
-        [InlineData("[hello a]", "R(9)")]
+        [InlineData("[hello '\\a']", "R(12)")]
         public void ShouldIgnoreMalformedArguments(string input, string encoded)
         {
             var scanner = new Scanner(input);
@@ -136,6 +137,7 @@ namespace Shortcodes.Tests
         [InlineData("[h a='\\u03A9']", "[h a=Ω]")]
         [InlineData("[h a='\\xe9']", "[h a=é]")]
         [InlineData("[h a='\\xE9']", "[h a=é]")]
+        // This is not a valid string (invalid escape sequence), and not a valid value as it start with '
         [InlineData("[h a='\\a']", "R(10)")]
         [InlineData("[h a='\\0']", "[h a=\0]")]
         [InlineData("[h a='\\\\']", "[h a=\\]")]

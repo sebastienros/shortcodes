@@ -36,6 +36,25 @@
             }
         }
 
+        public void Seek(int offset)
+        {
+            if (Eof)
+            {
+                return;
+            }
+
+            Offset = offset;
+
+            if (Offset < _textLength)
+            {
+                Char = Text[Offset];
+            }
+            else
+            {
+                Char = '\0';
+            }
+        }
+
         public char PeekNext(int index = 1)
         {
             if (_textLength == 0)
@@ -55,7 +74,7 @@
 
         public bool Eof => Offset >= _textLength;
         public char Char { get; private set; }
-        public int Offset { get; set; }
+        public int Offset { get; private set; }
         public string Text { get; }
     }
 }

@@ -45,7 +45,8 @@ This is an Hello world!
 
 ### Named arguments
 
-Arguments need to be quoted either with `'` or `"`.
+Arguments can contain ay character, but need to be quoted either with `'` or `"` if they contain spaces.
+Strings can use standard string escape sequences like `\u03A9` and `\n`.
 
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
@@ -58,7 +59,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold text='bold text']"));
+Console.WriteLine(await process.EvaluateAsync("[bold text='bold text' 1234]"));
 ```
 
 ### Content arguments
