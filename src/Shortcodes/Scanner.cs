@@ -23,8 +23,8 @@ namespace Shortcodes
 
         public void CreateCursor()
         {
-            _cursor = _cursor.Clone();
             _cursors.Push(_cursor);
+            _cursor = _cursor.Clone();
         }
 
         public void DiscardCursor()
@@ -76,10 +76,51 @@ namespace Shortcodes
 
             while (Character.IsIdentifierPart(_cursor.Char))
             {
+                if (_cursor.Eof)
+                {
+                    return false;
+                }
+
                 _cursor.Advance();
             }
 
             EmitToken("identifier", start, _cursor.Offset - start);
+
+            return true;
+        }
+
+        public bool ReadValue()
+        {
+            var start = _cursor.Offset;
+
+            if (_cursor.Char == ']' || _cursor.Char == '\'' || _cursor.Char == '"')
+            {
+                return false;
+            }
+
+            if (_cursor.Char == '/' && _cursor.PeekNext() == ']')
+            {
+                return false;
+            } 
+
+            while (!Character.IsWhiteSpace(_cursor.Char) && _cursor.Char != ']')
+            {
+                if (_cursor.Eof)
+                {
+                    return false;
+                }
+
+                _cursor.Advance();
+            }
+
+            var length = _cursor.Offset - start; 
+            
+            if (length == 0)
+            {
+                return false;
+            }
+
+            EmitToken("value", start, length);
 
             return true;
         }
@@ -96,19 +137,16 @@ namespace Shortcodes
             {
                 var startShortcode = _cursor.Offset;
 
-                if (_cursor.Char == '[')
+                if (ReadShortcode(out var shortcode))
                 {
-                    if (ReadShortcode(out var shortcode))
+                    if (startShortcode - start > 0)
                     {
-                        if (startShortcode - start > 0)
-                        {
-                            nodes.Add(new RawText(_text.Substring(start, startShortcode - start)));
-                        }
-
-                        nodes.Add(shortcode);
-
-                        start = _cursor.Offset;
+                        nodes.Add(new RawText(_text.Substring(start, startShortcode - start)));
                     }
+
+                    nodes.Add(shortcode);
+
+                    start = _cursor.Offset;
                 }
                 else
                 {
@@ -186,49 +224,82 @@ namespace Shortcodes
             int argumentIndex = 0;
 
             // Arguments?
-            while (ReadIdentifier() || ReadString())
+            while (true)
             {
-                // Is it a positioned argument?
-                if (_token.Type == "string")
+                if (ReadString())
                 {
                     arguments ??= new Dictionary<string, string>();
 
                     arguments[argumentIndex.ToString()] = DecodeString(_token.ToString());
 
                     argumentIndex += 1;
-
-                    SkipWhiteSpace();
                 }
-                else
+                else if (ReadIdentifier())
                 {
                     var argument = _token;
 
                     SkipWhiteSpace();
 
-                    if (!ReadEqualSign())
+                    // It might just be a value
+                    if (ReadEqualSign())
                     {
-                        DiscardCursor();
+                        SkipWhiteSpace();
 
-                        return false;
-                    }
+                        if (ReadString())
+                        {
+                            arguments ??= new Dictionary<string, string>();
 
-                    SkipWhiteSpace();
+                            arguments[argument.ToString()] = DecodeString(_token.ToString());
+                        }
+                        else if (ReadValue())
+                        {
+                            arguments ??= new Dictionary<string, string>();
 
-                    if (ReadString())
-                    {
-                        arguments ??= new Dictionary<string, string>();
+                            arguments[argument.ToString()] = _token.ToString();
+                        }
+                        else
+                        {
+                            DiscardCursor();
 
-                        arguments[argument.ToString()] = DecodeString(_token.ToString());
+                            return false;
+                        }
                     }
                     else
                     {
-                        DiscardCursor();
+                        // Positional argument that looks like an identifier
 
-                        return false;
+                        _cursor.Seek(argument.Start);
+
+                        if (ReadValue())
+                        {
+                            arguments ??= new Dictionary<string, string>();
+                            
+                            arguments[argumentIndex.ToString()] = _token.ToString();
+
+                            argumentIndex += 1;
+                        }
+                        else
+                        {
+                            _cursor.Seek(argument.Start);
+
+                            break;
+                        }
                     }
-
-                    SkipWhiteSpace();
                 }
+                else if (ReadValue())
+                {
+                    arguments ??= new Dictionary<string, string>();
+
+                    arguments[argumentIndex.ToString()] = _token.ToString();
+
+                    argumentIndex += 1;
+                }
+                else
+                {
+                    break;
+                }
+
+                SkipWhiteSpace();
             }
 
             // Is it a self-closing tag?
@@ -285,6 +356,8 @@ namespace Shortcodes
                 return false;
             }
             
+            CreateCursor();
+
             _cursor.Advance();
 
             while (_cursor.Char != startChar)
@@ -332,6 +405,8 @@ namespace Shortcodes
 
                             if (!isValidUnicode)
                             {
+                                DiscardCursor();
+
                                 return false;
                             }
 
@@ -352,11 +427,15 @@ namespace Shortcodes
 
                             if (!isValidHex)
                             {
+                                DiscardCursor();
+                                
                                 return false;
                             }
 
                             break;
                         default:
+                            DiscardCursor();
+
                             return false;
                     }
                 }

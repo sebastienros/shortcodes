@@ -141,7 +141,20 @@ namespace Shortcodes.Tests
             };
             
             var parser = new ShortcodesProcessor(_provider);
-            await parser.EvaluateAsync("[hello '1' 'b' c='d' '123']");
-        }        
+            await parser.EvaluateAsync("[hello 1 b c=d 123]");
+        }
+        
+        [Theory]
+        [InlineData("1234")]
+        [InlineData("true")]
+        [InlineData("123_456")]
+        [InlineData("http://github.com")]
+        [InlineData("http://github.com?foo=bar")]
+        public async Task ValuesAreParsed(string input)
+        {
+            var parser = new ShortcodesProcessor(_provider);
+
+            Assert.Equal($"0:{input};", await parser.EvaluateAsync($"[positional {input}]"));
+        }
     }
 }
