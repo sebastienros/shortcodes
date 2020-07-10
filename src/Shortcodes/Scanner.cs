@@ -228,7 +228,7 @@ namespace Shortcodes
             {
                 if (ReadString())
                 {
-                    arguments ??= new Dictionary<string, string>();
+                    arguments ??= CreateArgumentsDictionary();
 
                     arguments[argumentIndex.ToString()] = DecodeString(_token.ToString());
 
@@ -247,13 +247,13 @@ namespace Shortcodes
 
                         if (ReadString())
                         {
-                            arguments ??= new Dictionary<string, string>();
+                            arguments ??= CreateArgumentsDictionary();
 
                             arguments[argument.ToString()] = DecodeString(_token.ToString());
                         }
                         else if (ReadValue())
                         {
-                            arguments ??= new Dictionary<string, string>();
+                            arguments ??= CreateArgumentsDictionary();
 
                             arguments[argument.ToString()] = _token.ToString();
                         }
@@ -272,7 +272,7 @@ namespace Shortcodes
 
                         if (ReadValue())
                         {
-                            arguments ??= new Dictionary<string, string>();
+                            arguments ??= CreateArgumentsDictionary();
                             
                             arguments[argumentIndex.ToString()] = _token.ToString();
 
@@ -288,7 +288,7 @@ namespace Shortcodes
                 }
                 else if (ReadValue())
                 {
-                    arguments ??= new Dictionary<string, string>();
+                    arguments ??= CreateArgumentsDictionary();
 
                     arguments[argumentIndex.ToString()] = _token.ToString();
 
@@ -331,6 +331,12 @@ namespace Shortcodes
             PromoteCursor();
 
             return true;
+
+            // Local function to use the same logic to create the arguments dictionary
+            Dictionary<string, string> CreateArgumentsDictionary()
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
         }
 
         public bool ReadEqualSign()
