@@ -11,10 +11,10 @@ namespace Shortcodes.Tests
         {
             _provider = new NamedShortcodeProvider
             {
-                ["hello"] = (args, content) => new ValueTask<string>("Hello world!"),
-                ["named_or_default"] = (args, content) => new ValueTask<string>("Hello " + args.NamedOrDefault("name")),
-                ["upper"] = (args, content) => new ValueTask<string>(content.ToUpperInvariant()),
-                ["positional"] = (args, content) => 
+                ["hello"] = (args, content, ctx) => new ValueTask<string>("Hello world!"),
+                ["named_or_default"] = (args, content, ctx) => new ValueTask<string>("Hello " + args.NamedOrDefault("name")),
+                ["upper"] = (args, content, ctx) => new ValueTask<string>(content.ToUpperInvariant()),
+                ["positional"] = (args, content, ctx) => 
                 {
                     string result = "";
 
@@ -139,7 +139,7 @@ namespace Shortcodes.Tests
         {
             var provider = new NamedShortcodeProvider
             {
-                ["hello"] = (args, content) => 
+                ["hello"] = (args, content, ctx) => 
                 {
                     Assert.Equal("1", args.At(0));
                     Assert.Equal("b", args.At(1));
@@ -165,6 +165,29 @@ namespace Shortcodes.Tests
             var parser = new ShortcodesProcessor(_provider);
 
             Assert.Equal($"0:{input};", await parser.EvaluateAsync($"[positional {input}]"));
+        }
+
+        [Fact]
+        public async Task ContextIsShareAcrossShortcodes()
+        {
+            var parser = new ShortcodesProcessor(new NamedShortcodeProvider
+            {
+                ["inc"] = (args, content, ctx) => { ctx["x"] = ctx.GetOrSetValue("x", 0) + 1; return new ValueTask<string>(ctx["x"].ToString()); },
+                ["val"] = (args, content, ctx) => new ValueTask<string>(ctx["x"].ToString())
+            });
+
+            Assert.Equal("122", await parser.EvaluateAsync($"[inc][inc][val]"));
+        }
+
+        [Fact]
+        public async Task ShouldUseContextValue()
+        {
+            var parser = new ShortcodesProcessor(new NamedShortcodeProvider
+            {
+                ["hello"] = (args, content, ctx) => { return new ValueTask<string>("message: " + ctx["message"].ToString()); }
+            });
+
+            Assert.Equal("message: Hello World!", await parser.EvaluateAsync($"[hello]", new Context { ["message"] = "Hello World!" }));
         }
     }
 }

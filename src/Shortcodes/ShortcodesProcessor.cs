@@ -27,8 +27,19 @@ namespace Shortcodes
         {
         }
 
-        public async ValueTask<string> EvaluateAsync(string input)
+        /// <summary>
+        /// Evaluates a template with an optional context.
+        /// </summary>
+        /// <param name="input">The template to evaluate.</param>
+        /// <param name="context">An optional <see>Context</see> instance.</param>
+        /// <returns>A string with all shortcodes evaluated.</returns>
+        public async ValueTask<string> EvaluateAsync(string input, Context context = null)
         {
+            if (context == null)
+            {
+                context = new Context();
+            }
+
             // Don't do anything if brackets can't be found in the input text
             var openIndex = input.IndexOf("[", 0, StringComparison.OrdinalIgnoreCase);
             var closeIndex = input.IndexOf("]", 0, StringComparison.OrdinalIgnoreCase);
@@ -42,10 +53,10 @@ namespace Shortcodes
             var scanner = new Scanner(input);
             var nodes = scanner.Scan();
 
-            return await FoldClosingTagsAsync(input, nodes, 0, nodes.Count);
+            return await FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
         }
 
-        private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length)
+        private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length, Context context)
         {
             // This method should not be called when nodes has a single RawText element.
             // It's implementation assumes at least two nodes are provided.
@@ -142,7 +153,7 @@ namespace Shortcodes
                     }
                     else
                     {
-                        sb.Builder.Append(await RenderAsync(start));
+                        sb.Builder.Append(await RenderAsync(start, context));
                     }
                 }
                 else
@@ -156,21 +167,21 @@ namespace Shortcodes
                         if (tail - head == 1)
                         {
                             start.Content = "";
-                            sb.Builder.Append(await RenderAsync(start));
+                            sb.Builder.Append(await RenderAsync(start, context));
                         }
                         // Is there a single Raw text between the tags?
                         else if (tail - head == 2)
                         {
                             var content = nodes[head+1] as RawText;
                             start.Content = content.Text;
-                            sb.Builder.Append(await RenderAsync(start));
+                            sb.Builder.Append(await RenderAsync(start, context));
                         }
                         // Fold the inner nodes
                         else
                         {
-                            var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1);
+                            var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
                             start.Content = content;
-                            sb.Builder.Append(await RenderAsync(start));
+                            sb.Builder.Append(await RenderAsync(start, context));
                         }        
                     }
                     else
@@ -185,46 +196,9 @@ namespace Shortcodes
             }
             
             return sb.Builder.ToString();
-            
-        //     for (var j = nodes.Count - 1; j >= 0; j--)
-        //     {
-        //         if (nodes[j] is Shortcode end && end.Style == ShortcodeStyle.Close)
-        //         {
-        //             // Found an end tag
-        //             for (var i = 0; i < j; i++)
-        //             {
-        //                 if (nodes[i] is Shortcode start && start.Style == ShortcodeStyle.Open && String.Equals(start.Identifier, end.Identifier, StringComparison.OrdinalIgnoreCase))
-        //                 {
-        //                     var text = "";
-
-        //                     // Don't instantiate a builder if there is no inner node 
-        //                     if (i < j - 1)
-        //                     {
-        //                         using (var sb = StringBuilderPool.GetInstance())
-        //                         {
-        //                             for (var k = i + 1; k < j; k++)
-        //                             {
-        //                                 sb.Builder.Append(await RenderAsync(nodes[k]));
-        //                             }
-
-        //                             text = sb.ToString();
-        //                         }
-        //                     }
-
-        //                     nodes.RemoveRange(i + 1, j - i);
-
-        //                     start.Content = text;
-
-        //                     return true;
-        //                 }
-        //             }                    
-        //         }
-        //     }
-
-        //     return false;
         }
 
-        public async ValueTask<string> RenderAsync(Node node)
+        public async ValueTask<string> RenderAsync(Node node, Context context)
         {
             switch (node)
             {
@@ -234,7 +208,7 @@ namespace Shortcodes
                 case Shortcode code:
                     foreach (var provider in Providers)
                     {
-                        var result = await provider.EvaluateAsync(code.Identifier, code.Arguments, code.Content);
+                        var result = await provider.EvaluateAsync(code.Identifier, code.Arguments, code.Content, context);
 
                         if (result != null)
                         {

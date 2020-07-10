@@ -32,7 +32,7 @@ namespace Shortcodes
             set { Shortcodes[shortcode] = value; }
         }
 
-        public ValueTask<string> EvaluateAsync(string identifier, Arguments arguments, string content)
+        public ValueTask<string> EvaluateAsync(string identifier, Arguments arguments, string content, Context context)
         {
             if (Shortcodes.TryGetValue(identifier, out var shortcode))
             {
@@ -41,7 +41,7 @@ namespace Shortcodes
                     return Null;
                 }
 
-                return shortcode.Invoke(arguments, content);
+                return shortcode.Invoke(arguments, content, context);
             }
 
             return Null;

@@ -23,6 +23,8 @@ namespace Shortcodes
             return ((IEnumerable<KeyValuePair<string, string>>)_arguments).GetEnumerator();
         }
 
+        public ICollection<string> Keys => _arguments.Keys;
+
         public string Named(string index)
         {
             if (_arguments == null)

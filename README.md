@@ -31,7 +31,7 @@ using Shortcodes;
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
-    ["hello"] = (args, content) => new ValueTask<string>("Hello world!")
+    ["hello"] = (args, content, ctx) => new ValueTask<string>("Hello world!")
 });
 
 Console.WriteLine(await process.EvaluateAsync("This is an [hello]"));
@@ -51,7 +51,7 @@ Strings can use standard string escape sequences like `\u03A9` and `\n`.
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
-    ["bold"] = (args, content) => 
+    ["bold"] = (args, content, ctx) => 
     {
         var text = args.Named("text");
         
@@ -69,7 +69,7 @@ Shortcodes using opening and closing tags can access their inner content.
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
-    ["bold"] = (args, content) => 
+    ["bold"] = (args, content, ctx) => 
     {
         return new ValueTask<string>($"<b>{content}</b>");
     }
@@ -88,7 +88,7 @@ If an argument doesn't have a name, an default index can be used.
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
-    ["bold"] = (args, content) => 
+    ["bold"] = (args, content, ctx) => 
     {
         var text = args.NamedOrDefault("text");
         
@@ -110,7 +110,7 @@ have a name, the index is incremented.
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
-    ["bold"] = (args, content) => 
+    ["bold"] = (args, content, ctx) => 
     {
         var text = args.At(0);
         
@@ -174,4 +174,40 @@ Will be rendered as
 
 ```
 [[[[bold 'text']]
+```
+
+### Context object
+
+A __Context__ object can be passed when evaluating a template. This object
+is shared across all shortcodes
+
+A common usage is to pass custom data that might be used by some shortcodes, like
+the current `HttpContext` if a template is runningin a web application and needs 
+to access the current request.
+
+Another usage is to use it as a bag of values that can be shared across shortcodes.
+
+```c#
+// From a Startup.cs class
+
+var processor = new ShortcodesProcessor(new NamedShortcodeProvider
+{
+    ["username"] = (args, content, ctx) => 
+    {
+        var httpContext = (HttpContext)ctx["HttpContext"];
+        
+        return new ValueTask<string>(httpContext.User.Identity.Name);
+    }
+});
+
+app.Run((httpContext) =>
+{
+    var context = new Context({ ["HttpContext"] = httpContext });
+    var result = await process.EvaluateAsync("The current user is [username]", context);
+    return context.Response.WriteAsync(result);
+});
+```
+
+```
+The current user is admin
 ```
