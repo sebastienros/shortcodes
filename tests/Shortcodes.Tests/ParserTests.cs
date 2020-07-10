@@ -111,6 +111,16 @@ namespace Shortcodes.Tests
         }
 
         [Theory]
+        [InlineData("[named_or_default Name='world!']", "Hello world!")]
+        [InlineData("[named_or_default NAME='world!']", "Hello world!")]
+        public async Task ArgumentsAreCaseInsensitive(string input, string expected)
+        {
+            var parser = new ShortcodesProcessor(_provider);
+
+            Assert.Equal(expected, await parser.EvaluateAsync(input));
+        }
+
+        [Theory]
         [InlineData("[upper]lorem[/upper]", "LOREM")]
         [InlineData("[upper]lorem[/upper] [upper]ipsum[/upper]", "LOREM IPSUM")]
         [InlineData("[upper]lorem [upper]ipsum[/upper][/upper]", "LOREM IPSUM")]
