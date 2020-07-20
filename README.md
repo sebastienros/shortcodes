@@ -182,7 +182,7 @@ A __Context__ object can be passed when evaluating a template. This object
 is shared across all shortcodes
 
 A common usage is to pass custom data that might be used by some shortcodes, like
-the current `HttpContext` if a template is runningin a web application and needs 
+the current `HttpContext` if a template is running in a web application and needs 
 to access the current request.
 
 Another usage is to use it as a bag of values that can be shared across shortcodes.
