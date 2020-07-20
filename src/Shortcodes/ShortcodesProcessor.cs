@@ -35,6 +35,11 @@ namespace Shortcodes
         /// <returns>A string with all shortcodes evaluated.</returns>
         public async ValueTask<string> EvaluateAsync(string input, Context context = null)
         {
+            if (String.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
             if (context == null)
             {
                 context = new Context();

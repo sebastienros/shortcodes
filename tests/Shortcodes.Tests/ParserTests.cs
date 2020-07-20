@@ -29,6 +29,7 @@ namespace Shortcodes.Tests
         }
 
         [Theory]
+        [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
         [InlineData("  ")]
