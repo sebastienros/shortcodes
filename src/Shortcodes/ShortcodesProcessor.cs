@@ -40,11 +40,6 @@ namespace Shortcodes
                 return input;
             }
 
-            if (context == null)
-            {
-                context = new Context();
-            }
-
             // Don't do anything if brackets can't be found in the input text
             var openIndex = input.IndexOf("[", 0, StringComparison.OrdinalIgnoreCase);
             var closeIndex = input.IndexOf("]", 0, StringComparison.OrdinalIgnoreCase);
@@ -52,6 +47,11 @@ namespace Shortcodes
             if (openIndex < 0 || closeIndex < 0 || closeIndex < openIndex)
             {
                 return input;
+            }
+
+            if (context == null)
+            {
+                context = new Context();
             }
 
             // Scan for tags
@@ -79,7 +79,7 @@ namespace Shortcodes
                 var tail = 0;
     
                 // Find the next opening tag
-                while (cursor < nodes.Count && start == null)
+                while (cursor <= index + length - 1 && start == null)
                 {
                     var node = nodes[cursor];
 
@@ -89,6 +89,11 @@ namespace Shortcodes
                         {
                             head = cursor;
                             start = shortCode;
+                        }
+                        else
+                        {
+                            // These closing tags need to be rendered
+                            sb.Builder.Append(input.Substring(shortCode.SourceIndex, shortCode.SourceLength + 1));
                         }
                     }
                     else
@@ -141,7 +146,7 @@ namespace Shortcodes
                     cursor += 1;
                 }
 
-                // Is is a single tag?
+                // Is it a single tag?
                 if (end == null)
                 {
                     cursor = head + 1;
@@ -158,7 +163,7 @@ namespace Shortcodes
                     }
                     else
                     {
-                        sb.Builder.Append(await RenderAsync(start, context));
+                        sb.Builder.Append(await RenderAsync(input, start, null, context));
                     }
                 }
                 else
@@ -172,21 +177,26 @@ namespace Shortcodes
                         if (tail - head == 1)
                         {
                             start.Content = "";
-                            sb.Builder.Append(await RenderAsync(start, context));
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
                         }
-                        // Is there a single Raw text between the tags?
+                        // Is there a single node between the tags?
                         else if (tail - head == 2)
                         {
-                            var content = nodes[head+1] as RawText;
-                            start.Content = content.Text;
-                            sb.Builder.Append(await RenderAsync(start, context));
+                            // Render the inner node (raw or shortcode)
+                            var content = nodes[head + 1];
+
+                            // Set it to the start shortcode
+                            start.Content = await RenderAsync(input, content, null, context);
+
+                            // Render the start shortcode
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
                         }
                         // Fold the inner nodes
                         else
                         {
                             var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
                             start.Content = content;
-                            sb.Builder.Append(await RenderAsync(start, context));
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
                         }        
                     }
                     else
@@ -203,9 +213,9 @@ namespace Shortcodes
             return sb.Builder.ToString();
         }
 
-        public async ValueTask<string> RenderAsync(Node node, Context context)
+        private async ValueTask<string> RenderAsync(string source, Node start, Shortcode end, Context context)
         {
-            switch (node)
+            switch (start)
             {
                 case RawText raw:
                     return raw.Text;
@@ -220,10 +230,21 @@ namespace Shortcodes
                             return result;
                         }
                     }
-                    break;
-            }
 
-            return "";
+                    // Return original content if no handler is found
+                    if (end == null)
+                    {
+                        // No closing tag
+                        return source.Substring(code.SourceIndex, code.SourceLength + code.CloseBraces);
+                    }
+                    else
+                    {
+                        return source.Substring(code.SourceIndex, end.SourceIndex - code.SourceIndex + end.SourceLength + end.CloseBraces);
+                    }
+
+                default:
+                    throw new NotSupportedException();
+            }
         }
     }
 }
