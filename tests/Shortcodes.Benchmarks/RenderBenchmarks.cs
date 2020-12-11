@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 namespace Shortcodes.Benchmarks
 {
     [MemoryDiagnoser]
+    [ShortRunJob]
     public class RenderBenchmarks
     {
         private NamedShortcodeProvider _provider;
@@ -28,6 +29,9 @@ namespace Shortcodes.Benchmarks
 
         [Benchmark]
         public async Task<string> Unkown() => await _processor.EvaluateAsync("Lorem [lower]ipsum[/lower] dolor est");
+
+        [Benchmark]
+        public async Task<string> Big() => await _processor.EvaluateAsync("Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est ");
 
     }
 }
