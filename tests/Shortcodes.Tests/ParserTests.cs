@@ -84,6 +84,16 @@ namespace Shortcodes.Tests
         [InlineData("[  foo arg1=blah  ] [/foo]", "[  foo arg1=blah  ] [/foo]")]
         [InlineData("[/foo]", "[/foo]")]
         [InlineData(" [/ foo ] ", " [/ foo ] ")]
+        [InlineData(" [a] [/a] ", " [a] [/a] ")]
+        [InlineData("[a][hello][/a]", "[a]Hello world![/a]")]
+        [InlineData("[/a][a][hello][a][/a]", "[/a][a]Hello world![a][/a]")]
+        [InlineData(" [a][hello][/a] ", " [a]Hello world![/a] ")]
+        [InlineData(" [a] [hello] [/a] ", " [a] Hello world! [/a] ")]
+        [InlineData(" [a] [hello] [/a][/a] ", " [a] Hello world! [/a][/a] ")]
+        [InlineData(" [a]]] [hello] [/a][[/a] ", " [a]]] Hello world! [/a][[/a] ")]
+        [InlineData(" [a]]] [/a]"," [a]]] [/a]")]
+        [InlineData("[a]]][/a]","[a]]][/a]")]
+        [InlineData(" [a]]] [hello]"," [a]]] Hello world!")]
         public async Task IngoreUnknownShortcodes(string input, string expected)
         {
             var parser = new ShortcodesProcessor(_provider);
