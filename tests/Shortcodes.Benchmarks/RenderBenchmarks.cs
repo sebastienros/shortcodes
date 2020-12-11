@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace Shortcodes.Benchmarks
 {
+    [MemoryDiagnoser]
     public class RenderBenchmarks
     {
         private NamedShortcodeProvider _provider;
