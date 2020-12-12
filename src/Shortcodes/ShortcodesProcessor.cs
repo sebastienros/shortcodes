@@ -40,11 +40,6 @@ namespace Shortcodes
                 return input;
             }
 
-            if (context == null)
-            {
-                context = new Context();
-            }
-
             // Don't do anything if brackets can't be found in the input text
             var openIndex = input.IndexOf("[", 0, StringComparison.OrdinalIgnoreCase);
             var closeIndex = input.IndexOf("]", 0, StringComparison.OrdinalIgnoreCase);
@@ -52,6 +47,11 @@ namespace Shortcodes
             if (openIndex < 0 || closeIndex < 0 || closeIndex < openIndex)
             {
                 return input;
+            }
+
+            if (context == null)
+            {
+                context = new Context();
             }
 
             // Scan for tags
@@ -79,7 +79,7 @@ namespace Shortcodes
                 var tail = 0;
     
                 // Find the next opening tag
-                while (cursor < nodes.Count && start == null)
+                while (cursor <= index + length - 1 && start == null)
                 {
                     var node = nodes[cursor];
 
@@ -89,6 +89,11 @@ namespace Shortcodes
                         {
                             head = cursor;
                             start = shortCode;
+                        }
+                        else
+                        {
+                            // These closing tags need to be rendered
+                            sb.Builder.Append(input.Substring(shortCode.SourceIndex, shortCode.SourceLength + 1));
                         }
                     }
                     else
@@ -141,7 +146,7 @@ namespace Shortcodes
                     cursor += 1;
                 }
 
-                // Is is a single tag?
+                // Is it a single tag?
                 if (end == null)
                 {
                     cursor = head + 1;
@@ -158,44 +163,83 @@ namespace Shortcodes
                     }
                     else
                     {
-                        sb.Builder.Append(await RenderAsync(start, context));
+                        sb.Builder.Append(await RenderAsync(input, start, null, context));
                     }
                 }
                 else
                 {
-                    // If the braces are unbalanced we can't render the shortcode
-                    var canRenderShortcode = start.OpenBraces == 1 && start.CloseBraces == 1 && end.OpenBraces == 1 && end.CloseBraces == 1;
+                    // Standard braces are made of 1 brace on each edge
+                    var standardBraces = start.OpenBraces == 1 && start.CloseBraces == 1 && end.OpenBraces == 1 && end.CloseBraces == 1;
+                    var balancedBraces = start.OpenBraces == end.CloseBraces && start.CloseBraces == end.OpenBraces;
 
-                    if (canRenderShortcode)
+                    if (standardBraces)
                     {
                         // Are the tags adjacent?
                         if (tail - head == 1)
                         {
                             start.Content = "";
-                            sb.Builder.Append(await RenderAsync(start, context));
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
                         }
-                        // Is there a single Raw text between the tags?
+                        // Is there a single node between the tags?
                         else if (tail - head == 2)
                         {
-                            var content = nodes[head+1] as RawText;
-                            start.Content = content.Text;
-                            sb.Builder.Append(await RenderAsync(start, context));
+                            // Render the inner node (raw or shortcode)
+                            var content = nodes[head + 1];
+
+                            // Set it to the start shortcode
+                            start.Content = await RenderAsync(input, content, null, context);
+
+                            // Render the start shortcode
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
                         }
                         // Fold the inner nodes
                         else
                         {
                             var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
                             start.Content = content;
-                            sb.Builder.Append(await RenderAsync(start, context));
-                        }        
+                            sb.Builder.Append(await RenderAsync(input, start, end, context));
+                        }
                     }
                     else
                     {
-                        var bracesToSkip = start.OpenBraces == end.CloseBraces ? 1 : 0;
+                        // Balanced braces represent an escape sequence, e.g. [[upper]foo[/upper]] -> [upper]foo[/upper]
+                        if (balancedBraces)
+                        {
+                            var bracesToSkip = start.OpenBraces == end.CloseBraces ? 1 : 0;
 
-                        sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
-                        sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, end.SourceIndex + end.SourceLength - end.CloseBraces - start.SourceIndex - start.OpenBraces + 1));
-                        sb.Builder.Append(']', end.CloseBraces - bracesToSkip);
+                            sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
+                            sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, end.SourceIndex + end.SourceLength - end.CloseBraces - start.SourceIndex - start.OpenBraces + 1));
+                            sb.Builder.Append(']', end.CloseBraces - bracesToSkip);
+                        }
+                        // Unbalanced braces only evaluate inner content, e.g. [upper]foo[/upper]]
+                        else
+                        {
+                            // Are the tags adjacent?
+                            if (tail - head == 1)
+                            {
+                                sb.Builder.Append(GetRawNode(input, start));
+                                sb.Builder.Append(GetRawNode(input, end));
+                            }
+                            // Is there a single node between the tags?
+                            else if (tail - head == 2)
+                            {
+                                // Render the inner node (raw or shortcode)
+                                var content = nodes[head + 1];
+
+                                sb.Builder.Append(GetRawNode(input, start));
+                                sb.Builder.Append(await RenderAsync(input, content, null, context));
+                                sb.Builder.Append(GetRawNode(input, end));
+                            }
+                            // Fold the inner nodes
+                            else
+                            {
+                                var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
+
+                                sb.Builder.Append(GetRawNode(input, start));
+                                sb.Builder.Append(content);
+                                sb.Builder.Append(GetRawNode(input, end));
+                            }
+                        }
                     }        
                 }
             }
@@ -203,9 +247,21 @@ namespace Shortcodes
             return sb.Builder.ToString();
         }
 
-        public async ValueTask<string> RenderAsync(Node node, Context context)
+        private string GetRawNode(string source, Shortcode node)
         {
-            switch (node)
+            if (node.OpenBraces == node.CloseBraces)
+            {
+                return source.Substring(node.SourceIndex, node.SourceLength + node.CloseBraces);
+            }
+            else
+            {
+                return source.Substring(node.SourceIndex, node.SourceLength + 1);
+            }
+        }
+
+        private async Task<string> RenderAsync(string source, Node start, Shortcode end, Context context)
+        {
+            switch (start)
             {
                 case RawText raw:
                     return raw.Text;
@@ -220,10 +276,28 @@ namespace Shortcodes
                             return result;
                         }
                     }
-                    break;
-            }
 
-            return "";
+                    // Return original content if no handler is found
+                    if (end == null)
+                    {
+                        // No closing tag
+                        return source.Substring(code.SourceIndex, code.SourceLength + code.CloseBraces);
+                    }
+                    else
+                    {
+                        // Potential optimizations:
+                        // - use a shared argument array to return a list of strings
+                        // - use a lambda argument to execute an action on each string
+
+                        return source.Substring(code.SourceIndex, code.SourceLength + code.CloseBraces)
+                            + code.Content
+                            + source.Substring(end.SourceIndex, end.SourceLength + end.CloseBraces)
+                            ;
+                    }
+
+                default:
+                    throw new NotSupportedException();
+            }
         }
     }
 }

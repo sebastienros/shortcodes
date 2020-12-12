@@ -71,6 +71,37 @@ namespace Shortcodes.Tests
         }
 
         [Theory]
+        [InlineData("[hello][foo]", "Hello world![foo]")]
+        [InlineData("[hello  ][foo]", "Hello world![foo]")]
+        [InlineData("[foo][hello]", "[foo]Hello world!")]
+        [InlineData("[upper][foo][/upper]", "[FOO]")]
+        [InlineData("[upper] [ foo ] [/upper]", " [ FOO ] ")]
+        [InlineData("[[upper] [[] foo []] [/upper]]", "[upper] [[] foo []] [/upper]")]
+        [InlineData("[[[upper] [[] foo []] [/upper]]]", "[[upper] [[] foo []] [/upper]]")]
+        [InlineData("[upper] [hello] [/upper]", " HELLO WORLD! ")]
+        [InlineData("[foo arg1=blah] ", "[foo arg1=blah] ")]
+        [InlineData("[  foo arg1=blah  ]", "[  foo arg1=blah  ]")]
+        [InlineData("[  foo arg1=blah  ] [/foo]", "[  foo arg1=blah  ] [/foo]")]
+        [InlineData("[/foo]", "[/foo]")]
+        [InlineData(" [/ foo ] ", " [/ foo ] ")]
+        [InlineData(" [a] [/a] ", " [a] [/a] ")]
+        [InlineData("[a][hello][/a]", "[a]Hello world![/a]")]
+        [InlineData("[/a][a][hello][a][/a]", "[/a][a]Hello world![a][/a]")]
+        [InlineData(" [a][hello][/a] ", " [a]Hello world![/a] ")]
+        [InlineData(" [a] [hello] [/a] ", " [a] Hello world! [/a] ")]
+        [InlineData(" [a] [hello] [/a][/a] ", " [a] Hello world! [/a][/a] ")]
+        [InlineData(" [a]]] [hello] [/a][[/a] ", " [a]]] Hello world! [/a][[/a] ")]
+        [InlineData(" [a]]] [/a]"," [a]]] [/a]")]
+        [InlineData("[a]]][/a]","[a]]][/a]")]
+        [InlineData(" [a]]] [hello]"," [a]]] Hello world!")]
+        public async Task IngoreUnknownShortcodes(string input, string expected)
+        {
+            var parser = new ShortcodesProcessor(_provider);
+
+            Assert.Equal(expected, await parser.EvaluateAsync(input));
+        }
+
+        [Theory]
         [InlineData("[[hello]]", "[hello]")]
         [InlineData("[[[hello]]]", "[[hello]]")]
         [InlineData("[[[[hello]]]]", "[[[hello]]]")]
