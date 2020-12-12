@@ -21,13 +21,13 @@ jobs:
     - name: Build
       run: |
         arrTag=(${GITHUB_REF//\// })
-        RELEASE_VERSION="${arrTag[2]}"
-        RELEASE_VERSION="${RELEASE_VERSION//v}"
-        echo "$RELEASE_VERSION"
-        dotnet build --configuration Release --no-restore
+        VERSION="${arrTag[2]}"
+        VERSION="${VERSION//v}"
+        echo "$VERSION"
+        dotnet build --configuration Release --no-restore -p:Version=$VERSION
     - name: Test
       run: dotnet test --no-restore
     - name: Pack with dotnet
-      run: dotnet pack --output artifacts --configuration Release
+      run: dotnet pack --output artifacts --configuration Release -p:Version=$VERSION
     # - name: Push with dotnet
     #   run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
