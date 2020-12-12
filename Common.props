@@ -5,7 +5,7 @@
     <Authors>Sebastien Ros</Authors>
     <PackageProjectUrl>https://github.com/sebastienros/shortcodes</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <VersionSuffix Condition="'$(VersionSuffix)'!='' AND '$(GITHUB_RUN_ID)' != ''">$(VersionSuffix)-$(GITHUB_RUN_ID)</VersionSuffix>
+    <Version>0.0.0-preview-$(GITHUB_RUN_ID)</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>Latest</LangVersion>
