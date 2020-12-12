@@ -12,15 +12,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.101
     - run: echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
     - name: Test
       run: |
         echo $RELEASE_VERSION
         echo ${{ env.RELEASE_VERSION }}
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
     - name: Install dependencies
       run: dotnet restore
     - name: Build
