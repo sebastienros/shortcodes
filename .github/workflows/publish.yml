@@ -15,19 +15,17 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.101
-    - name: Version
-      run: |
-        echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
-        echo $RELEASE_VERSION
-        echo ${{ env.RELEASE_VERSION }}
+        dotnet-version: 5.0.101
     - name: Install dependencies
       run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore
+      run: dotnet test -c Release
     - name: Pack with dotnet
-      run: dotnet pack --output artifacts --configuration Release
-    # - name: Push with dotnet
-    #   run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: |
+        arrTag=(${GITHUB_REF//\// })
+        VERSION="${arrTag[2]}"
+        VERSION="${VERSION//v}"
+        echo "$VERSION"
+        dotnet pack --output artifacts --configuration Release -p:Version=$VERSION
+    - name: Push with dotnet
+      run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
