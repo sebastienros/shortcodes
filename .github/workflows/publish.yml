@@ -2,7 +2,8 @@ name: Publish
 
 on:
   push:
-    branches: [ release/1.x ]
+    tags: 
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -11,18 +12,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.101
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    # - name: Setup .NET Core
+    #   uses: actions/setup-dotnet@v1
+    #   with:
+    #     dotnet-version: 3.1.101
+    # - name: Install dependencies
+    #   run: dotnet restore
+    # - name: Build
+    #   run: dotnet build --configuration Release --no-restore
+    # - name: Test
+    #   run: dotnet test --no-restore
+    # - name: Pack with dotnet
+    #   run: dotnet pack --output artifacts --configuration Release
+    # - name: Push with dotnet
+    #   run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+    - run: echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
     - name: Test
-      run: dotnet test --no-restore
-    - name: Pack with dotnet
-      run: dotnet pack --output artifacts --configuration Release
-    - name: Push with dotnet
-      run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
-      
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
