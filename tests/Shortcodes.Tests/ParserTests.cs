@@ -5,7 +5,7 @@ namespace Shortcodes.Tests
 {
     public class ParserTests
     {
-        private NamedShortcodeProvider _provider;
+        private readonly NamedShortcodeProvider _provider;
 
         public ParserTests()
         {
