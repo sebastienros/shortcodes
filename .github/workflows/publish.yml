@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - run: echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -19,6 +18,7 @@ jobs:
         dotnet-version: 3.1.101
     - name: Version
       run: |
+        echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
         echo $RELEASE_VERSION
         echo ${{ env.RELEASE_VERSION }}
     - name: Install dependencies
