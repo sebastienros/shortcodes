@@ -1,4 +1,6 @@
-﻿namespace Shortcodes
+﻿using System.Text;
+
+namespace Shortcodes
 {
     public class Character
     {
@@ -46,8 +48,6 @@
                                         ch == 0xFEFF));
         }
 
-
-
         public static char ScanHexEscape(string text, int index)
         {
             var prefix = text[index];
@@ -62,6 +62,65 @@
 
             return (char)code;
         }
+
+        public static string DecodeString(Token token)
+        {
+            return DecodeString(token.Text, token.StartIndex, token.Length);
+        }
+
+        public static string DecodeString(string text, int startIndex, int count)
+        {
+            // Nothing to do if the string doesn't have any escape char
+            if (text.IndexOf('\\', startIndex, count) == -1)
+            {
+                return text.Substring(startIndex, count);
+            }
+
+            // The asumption is that the new string will be shorted since most escapes are smaller
+            var sb = new StringBuilder(count);
+
+            var endIndex = startIndex + count;
+
+            for (var i = startIndex; i < endIndex; i++)
+            {
+                var c = text[i];
+
+                if (c == '\\')
+                {
+                    i++;
+                    c = text[i];
+
+                    switch (c)
+                    {
+                        case '0': sb.Append("\0"); break;
+                        case '\'': sb.Append("\'"); break;
+                        case '"': sb.Append("\""); break;
+                        case '\\': sb.Append("\\"); break;
+                        case 'b': sb.Append("\b"); break;
+                        case 'f': sb.Append("\f"); break;
+                        case 'n': sb.Append("\n"); break;
+                        case 'r': sb.Append("\r"); break;
+                        case 't': sb.Append("\t"); break;
+                        case 'v': sb.Append("\v"); break;
+                        case 'u':
+                            sb.Append(Character.ScanHexEscape(text, i));
+                            i += 4;
+                            break;
+                        case 'x':
+                            sb.Append(Character.ScanHexEscape(text, i));
+                            i += 2;
+                            break;
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
+        }
+
 
         private static int HexValue(char ch)
         {

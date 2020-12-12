@@ -7,9 +7,9 @@ namespace Shortcodes.Benchmarks
     [ShortRunJob]
     public class RenderBenchmarks
     {
-        private NamedShortcodeProvider _provider;
+        private readonly NamedShortcodeProvider _provider;
 
-        private ShortcodesProcessor _processor;
+        private readonly ShortcodesProcessor _processor;
 
         public RenderBenchmarks()
         {
