@@ -8,9 +8,8 @@ namespace Shortcodes
     {
         private readonly string _text;
         private Token _token;
-        private Stack<Cursor> _cursors = new Stack<Cursor>();
+        private readonly Stack<Cursor> _cursors = new Stack<Cursor>();
         private Cursor _cursor;
-        private StringBuilder _sb;
 
         public Scanner(string text)
         {
@@ -215,7 +214,7 @@ namespace Shortcodes
                 return false;
             }
 
-            Token identifier = _token;
+            var identifier = _token.ToString();
 
             SkipWhiteSpace();
 
@@ -230,7 +229,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = DecodeString(_token.ToString());
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(_token);
 
                     argumentIndex += 1;
                 }
@@ -249,7 +248,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argument.ToString()] = DecodeString(_token.ToString());
+                            arguments[argument.ToString()] = Character.DecodeString(_token);
                         }
                         else if (ReadValue())
                         {
@@ -268,7 +267,7 @@ namespace Shortcodes
                     {
                         // Positional argument that looks like an identifier
 
-                        _cursor.Seek(argument.Start);
+                        _cursor.Seek(argument.StartIndex);
 
                         if (ReadValue())
                         {
@@ -280,7 +279,7 @@ namespace Shortcodes
                         }
                         else
                         {
-                            _cursor.Seek(argument.Start);
+                            _cursor.Seek(argument.StartIndex);
 
                             break;
                         }
@@ -325,7 +324,7 @@ namespace Shortcodes
                 _cursor.Advance();
             } while (_cursor.Char == ']');
 
-            shortcode = new Shortcode(identifier.ToString(), style, openBraces, closeBraces, index, _cursor.Offset - index - 1);
+            shortcode = new Shortcode(identifier, style, openBraces, closeBraces, index, _cursor.Offset - index - 1);
             shortcode.Arguments = new Arguments(arguments);
 
             PromoteCursor();
@@ -333,7 +332,7 @@ namespace Shortcodes
             return true;
 
             // Local function to use the same logic to create the arguments dictionary
-            Dictionary<string, string> CreateArgumentsDictionary()
+            static Dictionary<string, string> CreateArgumentsDictionary()
             {
                 return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             }
@@ -454,63 +453,6 @@ namespace Shortcodes
             EmitToken("string", start + 1, _cursor.Offset - start - 2);
 
             return true;
-        }
-
-        public string DecodeString(string text)
-        {
-            // Nothing to do if the string doesn't have any escape char
-            if (text.IndexOf('\\') == -1)
-            {
-                return text;
-            }
-
-            var sb = GetStringBuilder();
-
-            for (var i = 0; i < text.Length; i++)
-            {
-                var c = text[i];
-
-                if (c == '\\')
-                {
-                    i = i + 1;
-                    c = text[i];
-
-                    switch (c)
-                    {
-                        case '0': sb.Append("\0"); break;
-                        case '\'': sb.Append("\'"); break;
-                        case '"': sb.Append("\""); break;
-                        case '\\': sb.Append("\\"); break;
-                        case 'b': sb.Append("\b"); break;
-                        case 'f': sb.Append("\f"); break;
-                        case 'n': sb.Append("\n"); break;
-                        case 'r': sb.Append("\r"); break;
-                        case 't': sb.Append("\t"); break;
-                        case 'v': sb.Append("\v"); break;
-                        case 'u':
-                            sb.Append(Character.ScanHexEscape(text, i));
-                            i = i + 4;
-                            break;
-                        case 'x':
-                            sb.Append(Character.ScanHexEscape(text, i));
-                            i = i + 2;
-                            break;
-                    }
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        private StringBuilder GetStringBuilder()
-        {
-            _sb ??= new StringBuilder();
-            _sb.Clear();
-            return _sb;
         }
     }
 }
