@@ -1,4 +1,6 @@
-﻿namespace Shortcodes
+﻿using System;
+
+namespace Shortcodes
 {
     public class Cursor
     {
@@ -12,13 +14,12 @@
             Offset = start;
             Text = text;
             _textLength = text.Length;
-            Char = Text.Length == 0 ? '\0' : Text[0];
             _prev = '\0';
         }
 
         public Cursor Clone()
         {
-            return new Cursor(Text, Offset) { Char = Char, Line = Line, Column = Column };
+            return new Cursor(Text, Offset) { Line = Line, Column = Column };
         }
 
         public void Advance()
@@ -30,43 +31,39 @@
 
             Offset++;
 
-            if (Offset < _textLength)
-            {
-                Char = Text[Offset];
+            var c = Peek();
 
-                if (Char == '\n' || (Char == '\r' && _prev != '\n'))
-                {
-                    Column = 0;
-                    Line += 1;
-                }
-                else
-                {
-                    Column++;
-                }
+            if (c == '\n' || (c == '\r' && _prev != '\n'))
+            {
+                Column = 0;
+                Line += 1;
             }
             else
             {
-                Char = '\0';
+                Column++;
             }
+            
+            _prev = c; 
         }
 
         public void Seek(int offset)
         {
+            if (offset < 0 || offset >= _textLength)
+            {
+                throw new ArgumentException("Offset out of bounds");
+            }
+            
+            Offset = offset;
+        }
+
+        public char Peek()
+        {
             if (Eof)
             {
-                return;
+                return '\0';
             }
 
-            Offset = offset;
-
-            if (Offset < _textLength)
-            {
-                Char = Text[Offset];
-            }
-            else
-            {
-                Char = '\0';
-            }
+            return Text[Offset];
         }
 
         public char PeekNext(int index = 1)
@@ -87,10 +84,36 @@
         }
 
         public bool Eof => Offset >= _textLength;
-        public char Char { get; private set; }
         public int Offset { get; private set; }
         public int Line { get; private set; }
         public int Column { get; private set; }
         public string Text { get; }
+        public bool Match(char c)
+        {
+            if (Eof)
+            {
+                return false;
+            }
+
+            return c.Equals(Text[Offset]);
+        }
+
+        public bool Match(string s)
+        {
+            if (Eof || Offset + s.Length >= _textLength + 1)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < s.Length; i++)
+            {
+                if (!s[i].Equals(Text[Offset + i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

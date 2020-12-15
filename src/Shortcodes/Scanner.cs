@@ -42,12 +42,12 @@ namespace Shortcodes
         /// <returns>Whether some white space was read.</returns>
         public bool SkipWhiteSpace()
         {
-            if (!Character.IsWhiteSpace(_cursor.Char))
+            if (!Character.IsWhiteSpace(_cursor.Peek()))
             {
                 return false;
             }
 
-            while (Character.IsWhiteSpace(_cursor.Char))
+            while (Character.IsWhiteSpace(_cursor.Peek()))
             {
                 _cursor.Advance();
             }
@@ -66,14 +66,14 @@ namespace Shortcodes
         {
             var start = _cursor.Offset;
 
-            if (!Character.IsIdentifierStart(_cursor.Char))
+            if (!Character.IsIdentifierStart(_cursor.Peek()))
             {
                 return false;
             }
 
             _cursor.Advance();
 
-            while (Character.IsIdentifierPart(_cursor.Char))
+            while (Character.IsIdentifierPart(_cursor.Peek()))
             {
                 if (_cursor.Eof)
                 {
@@ -92,17 +92,17 @@ namespace Shortcodes
         {
             var start = _cursor.Offset;
 
-            if (_cursor.Char == ']' || _cursor.Char == '\'' || _cursor.Char == '"')
+            if (_cursor.Match(']') || _cursor.Match('\'') || _cursor.Match('"'))
             {
                 return false;
             }
 
-            if (_cursor.Char == '/' && _cursor.PeekNext() == ']')
+            if (_cursor.Match("/]"))
             {
                 return false;
             } 
 
-            while (!Character.IsWhiteSpace(_cursor.Char) && _cursor.Char != ']')
+            while (!Character.IsWhiteSpace(_cursor.Peek()) && !_cursor.Match(']'))
             {
                 if (_cursor.Eof)
                 {
@@ -172,7 +172,7 @@ namespace Shortcodes
             shortcode = null;
             var style = ShortcodeStyle.Open;
 
-            if (_cursor.Char != '[')
+            if (!_cursor.Match('['))
             {
                 return false;
             }
@@ -187,10 +187,10 @@ namespace Shortcodes
             {
                 openBraces += 1;
                 _cursor.Advance();
-            } while (_cursor.Char == '[');
+            } while (_cursor.Match('['));
 
             // Is it a closing tag?
-            if (_cursor.Char == '/')
+            if (_cursor.Match('/'))
             {
                 style = ShortcodeStyle.Close;
 
@@ -302,7 +302,7 @@ namespace Shortcodes
             }
 
             // Is it a self-closing tag?
-            if (_cursor.Char == '/' && _cursor.PeekNext() == ']')
+            if (_cursor.Match("/]"))
             {
                 style = ShortcodeStyle.SelfClosing;
 
@@ -310,7 +310,7 @@ namespace Shortcodes
             }
 
             // Expect closing bracket
-            if (_cursor.Char != ']')
+            if (!_cursor.Match(']'))
             {
                 DiscardCursor();
 
@@ -322,7 +322,7 @@ namespace Shortcodes
             {
                 closeBraces += 1;
                 _cursor.Advance();
-            } while (_cursor.Char == ']');
+            } while (_cursor.Match(']'));
 
             shortcode = new Shortcode(identifier, style, openBraces, closeBraces, index, _cursor.Offset - index - 1);
             shortcode.Arguments = new Arguments(arguments);
@@ -340,7 +340,7 @@ namespace Shortcodes
 
         public bool ReadEqualSign()
         {
-            if (_cursor.Char != '=')
+            if (!_cursor.Match('='))
             {
                 return false;
             }
@@ -354,7 +354,7 @@ namespace Shortcodes
         {
             var start = _cursor.Offset;
 
-            var startChar = _cursor.Char;
+            var startChar = _cursor.Peek();
 
             if (startChar != '\'' && startChar != '"')
             {
@@ -365,18 +365,18 @@ namespace Shortcodes
 
             _cursor.Advance();
 
-            while (_cursor.Char != startChar)
+            while (!_cursor.Match(startChar))
             {
                 if (_cursor.Eof)
                 {
                     return false;
                 }
 
-                if (_cursor.Char == '\\')
+                if (_cursor.Match('\\'))
                 {
                     _cursor.Advance();
 
-                    switch (_cursor.Char)
+                    switch (_cursor.Peek())
                     {
                         case '0':
                         case '\'':
@@ -394,13 +394,13 @@ namespace Shortcodes
 
                             _cursor.Advance();
 
-                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
+                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Peek()))
                             {
                                 _cursor.Advance();
-                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
+                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Peek()))
                                 {
                                     _cursor.Advance();
-                                    if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
+                                    if (!_cursor.Eof && Character.IsHexDigit(_cursor.Peek()))
                                     {
                                         _cursor.Advance();
                                         isValidUnicode = true;
@@ -421,10 +421,10 @@ namespace Shortcodes
 
                             _cursor.Advance();
 
-                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
+                            if (!_cursor.Eof && Character.IsHexDigit(_cursor.Peek()))
                             {
                                 _cursor.Advance();
-                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Char))
+                                if (!_cursor.Eof && Character.IsHexDigit(_cursor.Peek()))
                                 {
                                     isValidHex = true;
                                 }

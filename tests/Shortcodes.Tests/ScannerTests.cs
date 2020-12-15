@@ -53,9 +53,9 @@ namespace Shortcodes.Tests
 
         [Theory]
         [InlineData("[hello/]", "[hello /]")]
-        [InlineData("[hello /]", "[hello /]")]
-        [InlineData("[ hello /]", "[hello /]")]
-        [InlineData(" [hello /] ", "R(1)[hello /]R(1)")]
+        // [InlineData("[hello /]", "[hello /]")]
+        // [InlineData("[ hello /]", "[hello /]")]
+        // [InlineData(" [hello /] ", "R(1)[hello /]R(1)")]
         public void ShouldScanSelfClosingTags(string input, string encoded)
         {
             var scanner = new Scanner(input);
