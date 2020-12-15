@@ -41,8 +41,8 @@ namespace Shortcodes
             }
 
             // Don't do anything if brackets can't be found in the input text
-            var openIndex = input.IndexOf("[", 0, StringComparison.OrdinalIgnoreCase);
-            var closeIndex = input.IndexOf("]", 0, StringComparison.OrdinalIgnoreCase);
+            var openIndex = input.IndexOf("[", 0, StringComparison.Ordinal);
+            var closeIndex = input.IndexOf("]", 0, StringComparison.Ordinal);
 
             if (openIndex < 0 || closeIndex < 0 || closeIndex < openIndex)
             {

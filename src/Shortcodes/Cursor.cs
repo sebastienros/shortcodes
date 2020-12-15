@@ -4,14 +4,15 @@ using System.Runtime.CompilerServices;
 
 namespace Shortcodes
 {
-    public class Cursor
+    public struct Cursor
     {
-        private Stack<int> _stack = new Stack<int>();
+        private Stack<int> _stack;
         private readonly int _textLength;
         private char _current;
 
         public Cursor(string text, int start)
         {
+            _stack = new Stack<int>();
             Line = 0;
             Column = 0;
             Offset = start;
