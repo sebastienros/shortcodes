@@ -13,7 +13,7 @@ namespace Shortcodes
         public Scanner(string text)
         {
             _text = text;
-            _cursor = new Cursor(_text, 0);
+            _cursor = new Cursor(_text, 0, false);
         }
 
         public Action<Token> OnToken { get; set; }
@@ -180,7 +180,7 @@ namespace Shortcodes
             // Reach Eof before end of shortcode
             if (_cursor.Eof)
             {
-               _cursor.RestoreLocation();
+               _cursor.RollbackLocation();
 
                 return false;
             }
@@ -189,7 +189,7 @@ namespace Shortcodes
 
             if (!ReadIdentifier())
             {
-                _cursor.RestoreLocation();
+                _cursor.RollbackLocation();
 
                 return false;
             }
@@ -238,7 +238,7 @@ namespace Shortcodes
                         }
                         else
                         {
-                            _cursor.RestoreLocation();
+                            _cursor.RollbackLocation();
 
                             return false;
                         }
@@ -292,7 +292,7 @@ namespace Shortcodes
             // Expect closing bracket
             if (!_cursor.Match("]"))
             {
-                _cursor.RestoreLocation();
+                _cursor.RollbackLocation();
 
                 return false;
             }
@@ -307,7 +307,7 @@ namespace Shortcodes
             shortcode = new Shortcode(identifier, style, openBraces, closeBraces, index, _cursor.Offset - index - 1);
             shortcode.Arguments = new Arguments(arguments);
 
-            _cursor.SaveLocation();
+            _cursor.CommitLocation();
 
             return true;
 
@@ -390,7 +390,7 @@ namespace Shortcodes
 
                             if (!isValidUnicode)
                             {
-                                _cursor.RestoreLocation();
+                                _cursor.RollbackLocation();
 
                                 return false;
                             }
@@ -412,14 +412,14 @@ namespace Shortcodes
 
                             if (!isValidHex)
                             {
-                                _cursor.RestoreLocation();
+                                _cursor.RollbackLocation();
                                 
                                 return false;
                             }
 
                             break;
                         default:
-                            _cursor.RestoreLocation();
+                            _cursor.RollbackLocation();
 
                             return false;
                     }
@@ -430,7 +430,7 @@ namespace Shortcodes
 
             _cursor.Advance();
 
-            _cursor.SaveLocation();
+            _cursor.CommitLocation();
             
             EmitToken("string", start + 1, _cursor.Offset - start - 2);
 

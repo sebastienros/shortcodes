@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace Shortcodes
 {
@@ -65,7 +66,7 @@ namespace Shortcodes
 
         public static string DecodeString(Token token)
         {
-            if (token.Text.IndexOf("\\", token.StartIndex, token.Length) == -1)
+            if (token.Text.IndexOf("\\", token.StartIndex, token.Length, StringComparison.Ordinal) == -1)
             {
                 return token.ToString();
             }
@@ -76,7 +77,7 @@ namespace Shortcodes
         public static string DecodeString(string text, int startIndex, int count)
         {
             // Nothing to do if the string doesn't have any escape char
-            if (text.IndexOf("\\", startIndex, count) == -1)
+            if (text.IndexOf("\\", startIndex, count, StringComparison.Ordinal) == -1)
             {
                 return text.Substring(startIndex, count);
             }
