@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Shortcodes
 {
-    public class Arguments : IEnumerable<KeyValuePair<string, string>>
+    public struct Arguments : IEnumerable<KeyValuePair<string, string>>
     {
         private Dictionary<string, string> _arguments;
 

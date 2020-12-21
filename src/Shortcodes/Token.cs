@@ -20,15 +20,6 @@
         public int Length { get; }
         public string Text { get; }
 
-        public char this[int index] => Text[StartIndex + index];
-
-        public int IndexOf(char c) => Text.IndexOf(c, StartIndex, Length);
-
-        public Token Clone()
-        {
-            return new Token(Type, Text, StartIndex, Length);
-        }
-
         public override string ToString()
         {
             return _value ??= Text.Substring(StartIndex, Length);
