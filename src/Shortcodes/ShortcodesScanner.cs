@@ -49,7 +49,7 @@ namespace Shortcodes
 
             var start = Cursor.Position;
 
-            if (Cursor.Match("]") || Cursor.Match("'") || Cursor.Match("\""))
+            if (Cursor.Match(']') || Cursor.Match('\'') || Cursor.Match('"'))
             {
                 return false;
             }
@@ -59,7 +59,7 @@ namespace Shortcodes
                 return false;
             }
 
-            while (!Character.IsWhiteSpace(Cursor.Peek()) && !Cursor.Match("]"))
+            while (!Character.IsWhiteSpace(Cursor.Peek()) && !Cursor.Match(']'))
             {
                 if (Cursor.Eof)
                 {
