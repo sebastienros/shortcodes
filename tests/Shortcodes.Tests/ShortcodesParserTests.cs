@@ -6,9 +6,9 @@ namespace Shortcodes.Tests
 {
     public class ShortcodesParserTests
     {
-        private StringBuilder _builder = new StringBuilder();
+        private readonly StringBuilder _builder = new StringBuilder();
 
-        private string EncodeNodes(List<Node> nodes)
+        private string EncodeNodes(IEnumerable<Node> nodes)
         {
             _builder.Clear();
 

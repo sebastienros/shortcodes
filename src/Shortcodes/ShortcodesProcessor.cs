@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Shortcodes
 {
     public class ShortcodesProcessor
     {
-        private ShortcodesParser _parser = new ShortcodesParser();
+        private readonly ShortcodesParser _parser = new ShortcodesParser();
 
         public List<IShortcodeProvider> Providers { get; }
 
@@ -57,12 +58,12 @@ namespace Shortcodes
             }
 
             // Parse nodes
-            var nodes = _parser.Parse(input);
+            var nodes = _parser.Parse(input).ToArray();
 
-            return FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
+            return FoldClosingTagsAsync(input, nodes, 0, nodes.Length, context);
         }
 
-        private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length, Context context)
+        private async ValueTask<string> FoldClosingTagsAsync(string input, Node[] nodes, int index, int length, Context context)
         {
             // This method should not be called when nodes has a single RawText element.
             // It's implementation assumes at least two nodes are provided.
