@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Shortcodes
@@ -95,7 +96,7 @@ namespace Shortcodes
                         else
                         {
                             // These closing tags need to be rendered
-                            sb.Builder.Append(input.Substring(shortCode.SourceIndex, shortCode.SourceLength + 1));
+                            sb.Builder.Append(input, shortCode.SourceIndex, shortCode.SourceLength + 1);
                         }
                     }
                     else
@@ -160,12 +161,12 @@ namespace Shortcodes
                         var bracesToSkip = start.OpenBraces == start.CloseBraces ? 1 : 0;
                         
                         sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
-                        sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, start.SourceLength - start.CloseBraces - start.OpenBraces + 1));
+                        sb.Builder.Append(input, start.SourceIndex + start.OpenBraces, start.SourceLength - start.CloseBraces - start.OpenBraces + 1);
                         sb.Builder.Append(']', start.CloseBraces - bracesToSkip);
                     }
                     else
                     {
-                        sb.Builder.Append(await RenderAsync(input, start, null, context));
+                        await AppendAsync(sb.Builder, input, start, null, context);
                     }
                 }
                 else
@@ -180,7 +181,7 @@ namespace Shortcodes
                         if (tail - head == 1)
                         {
                             start.Content = "";
-                            sb.Builder.Append(await RenderAsync(input, start, end, context));
+                            await AppendAsync(sb.Builder, input, start, end, context);
                         }
                         // Is there a single node between the tags?
                         else if (tail - head == 2)
@@ -189,17 +190,21 @@ namespace Shortcodes
                             var content = nodes[head + 1];
 
                             // Set it to the start shortcode
-                            start.Content = await RenderAsync(input, content, null, context);
+                            using (var sbContent = StringBuilderPool.GetInstance())
+                            {
+                                await AppendAsync(sbContent.Builder, input, content, null, context);
+                                start.Content = sbContent.ToString();
+                            }
 
                             // Render the start shortcode
-                            sb.Builder.Append(await RenderAsync(input, start, end, context));
+                            await AppendAsync(sb.Builder, input, start, end, context);
                         }
                         // Fold the inner nodes
                         else
                         {
                             var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
                             start.Content = content;
-                            sb.Builder.Append(await RenderAsync(input, start, end, context));
+                            await AppendAsync(sb.Builder, input, start, end, context);
                         }
                     }
                     else
@@ -210,7 +215,7 @@ namespace Shortcodes
                             var bracesToSkip = start.OpenBraces == end.CloseBraces ? 1 : 0;
 
                             sb.Builder.Append('[', start.OpenBraces - bracesToSkip);
-                            sb.Builder.Append(input.Substring(start.SourceIndex + start.OpenBraces, end.SourceIndex + end.SourceLength - end.CloseBraces - start.SourceIndex - start.OpenBraces + 1));
+                            sb.Builder.Append(input, start.SourceIndex + start.OpenBraces, end.SourceIndex + end.SourceLength - end.CloseBraces - start.SourceIndex - start.OpenBraces + 1);
                             sb.Builder.Append(']', end.CloseBraces - bracesToSkip);
                         }
                         // Unbalanced braces only evaluate inner content, e.g. [upper]foo[/upper]]
@@ -219,8 +224,8 @@ namespace Shortcodes
                             // Are the tags adjacent?
                             if (tail - head == 1)
                             {
-                                sb.Builder.Append(GetRawNode(input, start));
-                                sb.Builder.Append(GetRawNode(input, end));
+                                AppendRawNode(sb.Builder, input, start);
+                                AppendRawNode(sb.Builder, input, end);
                             }
                             // Is there a single node between the tags?
                             else if (tail - head == 2)
@@ -228,18 +233,18 @@ namespace Shortcodes
                                 // Render the inner node (raw or shortcode)
                                 var content = nodes[head + 1];
 
-                                sb.Builder.Append(GetRawNode(input, start));
-                                sb.Builder.Append(await RenderAsync(input, content, null, context));
-                                sb.Builder.Append(GetRawNode(input, end));
+                                AppendRawNode(sb.Builder, input, start);
+                                await AppendAsync(sb.Builder, input, content, null, context);
+                                AppendRawNode(sb.Builder, input, end);
                             }
                             // Fold the inner nodes
                             else
                             {
                                 var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
 
-                                sb.Builder.Append(GetRawNode(input, start));
+                                AppendRawNode(sb.Builder, input, start);
                                 sb.Builder.Append(content);
-                                sb.Builder.Append(GetRawNode(input, end));
+                                AppendRawNode(sb.Builder, input, end);
                             }
                         }
                     }        
@@ -249,24 +254,25 @@ namespace Shortcodes
             return sb.Builder.ToString();
         }
 
-        private string GetRawNode(string source, Shortcode node)
+        private void AppendRawNode(StringBuilder builder, string source, Shortcode node)
         {
             if (node.OpenBraces == node.CloseBraces)
             {
-                return source.Substring(node.SourceIndex, node.SourceLength + node.CloseBraces);
+                builder.Append(source, node.SourceIndex, node.SourceLength + node.CloseBraces);
             }
             else
             {
-                return source.Substring(node.SourceIndex, node.SourceLength + 1);
+                builder.Append(source, node.SourceIndex, node.SourceLength + 1);
             }
         }
 
-        private async ValueTask<string> RenderAsync(string source, Node start, Shortcode end, Context context)
+        private async Task AppendAsync(StringBuilder builder, string source, Node start, Shortcode end, Context context)
         {
             switch (start)
             {
                 case RawText raw:
-                    return raw.Buffer.Substring(raw.Offset, raw.Count);
+                    builder.Append(raw.Buffer, raw.Offset, raw.Count);
+                    return;
 
                 case Shortcode code:
                     foreach (var provider in Providers)
@@ -275,7 +281,8 @@ namespace Shortcodes
 
                         if (result != null)
                         {
-                            return result;
+                            builder.Append(result);
+                            return;
                         }
                     }
 
@@ -283,19 +290,18 @@ namespace Shortcodes
                     if (end == null)
                     {
                         // No closing tag
-                        return source.Substring(code.SourceIndex, code.SourceLength + code.CloseBraces);
+                        builder.Append(source, code.SourceIndex, code.SourceLength + code.CloseBraces);
                     }
                     else
                     {
-                        // Potential optimizations:
-                        // - use a shared argument array to return a list of strings
-                        // - use a lambda argument to execute an action on each string
-
-                        return source.Substring(code.SourceIndex, code.SourceLength + code.CloseBraces)
-                            + code.Content
-                            + source.Substring(end.SourceIndex, end.SourceLength + end.CloseBraces)
+                        builder
+                            .Append(source, code.SourceIndex, code.SourceLength + code.CloseBraces)
+                            .Append(code.Content)
+                            .Append(source, end.SourceIndex, end.SourceLength + end.CloseBraces)
                             ;
                     }
+
+                    break;
 
                 default:
                     throw new NotSupportedException();
