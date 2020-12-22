@@ -6,6 +6,8 @@ namespace Shortcodes
 {
     public class ShortcodesProcessor
     {
+        private ShortcodesParser _parser = new ShortcodesParser();
+
         public List<IShortcodeProvider> Providers { get; }
 
         public ShortcodesProcessor()
@@ -33,11 +35,11 @@ namespace Shortcodes
         /// <param name="input">The template to evaluate.</param>
         /// <param name="context">An optional <see>Context</see> instance.</param>
         /// <returns>A string with all shortcodes evaluated.</returns>
-        public async ValueTask<string> EvaluateAsync(string input, Context context = null)
+        public ValueTask<string> EvaluateAsync(string input, Context context = null)
         {
             if (String.IsNullOrEmpty(input))
             {
-                return input;
+                return new ValueTask<string>(input);
             }
 
             // Don't do anything if brackets can't be found in the input text
@@ -46,7 +48,7 @@ namespace Shortcodes
 
             if (openIndex < 0 || closeIndex < 0 || closeIndex < openIndex)
             {
-                return input;
+                return new ValueTask<string>(input);
             }
 
             if (context == null)
@@ -55,10 +57,9 @@ namespace Shortcodes
             }
 
             // Parse nodes
-            var parser = new ShortcodesParser();
-            var nodes = parser.Parse(input);
+            var nodes = _parser.Parse(input);
 
-            return await FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
+            return FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
         }
 
         private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length, Context context)
@@ -259,7 +260,7 @@ namespace Shortcodes
             }
         }
 
-        private async Task<string> RenderAsync(string source, Node start, Shortcode end, Context context)
+        private async ValueTask<string> RenderAsync(string source, Node start, Shortcode end, Context context)
         {
             switch (start)
             {

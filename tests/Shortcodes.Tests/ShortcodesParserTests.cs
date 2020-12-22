@@ -17,11 +17,11 @@ namespace Shortcodes.Tests
                 switch (node)
                 {
                     case Shortcode shortcode:
-                        _builder.Append("[");
+                        _builder.Append('[');
 
                         if (shortcode.Style == ShortcodeStyle.Close)
                         {
-                            _builder.Append("/");
+                            _builder.Append('/');
                         }
 
                         _builder.Append(shortcode.Identifier);
@@ -30,7 +30,7 @@ namespace Shortcodes.Tests
                         {
                             foreach (var argument in shortcode.Arguments)
                             {
-                                _builder.Append(" ").Append(argument.Key).Append('=').Append(argument.Value);
+                                _builder.Append(' ').Append(argument.Key).Append('=').Append(argument.Value);
                             }
                         }
 
@@ -39,7 +39,7 @@ namespace Shortcodes.Tests
                             _builder.Append(" /");
                         }
 
-                        _builder.Append("]");
+                        _builder.Append(']');
                         break;
 
                     case RawText raw:
