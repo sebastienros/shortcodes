@@ -4,8 +4,8 @@
     <AssemblyOriginatorKeyFile>Shortcodes.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-
-  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\parlot\src\Parlot\Parlot.csproj" />
   </ItemGroup>
+
 </Project>

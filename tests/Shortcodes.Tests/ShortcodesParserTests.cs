@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Shortcodes.Tests
 {
-    public class ScannerTests
+    public class ShortcodesParserTests
     {
         private StringBuilder _builder = new StringBuilder();
 
@@ -43,7 +43,7 @@ namespace Shortcodes.Tests
                         break;
 
                     case RawText raw:
-                        _builder.Append($"R({raw.Text.Length})");
+                        _builder.Append($"R({raw.Count})");
                         break;
                 }
             }
@@ -58,8 +58,7 @@ namespace Shortcodes.Tests
         [InlineData(" [hello /] ", "R(1)[hello /]R(1)")]
         public void ShouldScanSelfClosingTags(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -72,8 +71,7 @@ namespace Shortcodes.Tests
         [InlineData(" [/hello] ", "R(1)[/hello]R(1)")]
         public void ShouldScanCloseTags(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -82,11 +80,10 @@ namespace Shortcodes.Tests
         [Theory]
         [InlineData("[/hello", "R(7)")]
         [InlineData("[ /hello ]", "R(10)")]
-        [InlineData("[/ hello[", "R(9)")]
+        [InlineData("[/ hello[", "R(8)R(1)")]
         public void ShouldIgnoreMalformedTags(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -99,8 +96,7 @@ namespace Shortcodes.Tests
         [InlineData("a[hello]b[/hello]c[hello]d[/hello]e", "R(1)[hello]R(1)[/hello]R(1)[hello]R(1)[/hello]R(1)")]
         public void ShouldScanMixedTags(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -114,8 +110,7 @@ namespace Shortcodes.Tests
         [InlineData("[hello 123]", "[hello 0=123]")]
         public void ShouldScanArguments(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -126,8 +121,7 @@ namespace Shortcodes.Tests
         [InlineData("[hello '\\a']", "R(12)")]
         public void ShouldIgnoreMalformedArguments(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -151,8 +145,7 @@ namespace Shortcodes.Tests
         [InlineData("[h a='\\v']", "[h a=\v]")]
         public void ShouldEscapeStrings(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -163,8 +156,7 @@ namespace Shortcodes.Tests
         [InlineData("[h a='\\xe']", "R(11)")]
         public void ShouldNotParseInvalidEscapeSequence(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -175,8 +167,7 @@ namespace Shortcodes.Tests
         [InlineData("[h a=\"'\"]", "[h a=']")]
         public void ShouldStringsWitBothQuotes(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);
@@ -194,8 +185,7 @@ namespace Shortcodes.Tests
         [InlineData("[[[[hello a='b']", "[hello a=b]")]
         public void ShouldIncludeOpenAndCloseBraces(string input, string encoded)
         {
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            var nodes = new ShortcodesParser().Parse(input);
             var result = EncodeNodes(nodes);
 
             Assert.Equal(encoded, result);

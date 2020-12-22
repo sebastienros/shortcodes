@@ -7,7 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Version>0.0.0-preview-$(GITHUB_RUN_ID)</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <LangVersion>Latest</LangVersion>
     <DebugType>portable</DebugType>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>

@@ -6,7 +6,7 @@ namespace Shortcodes
 {
     public struct Arguments : IEnumerable<KeyValuePair<string, string>>
     {
-        private Dictionary<string, string> _arguments;
+        private readonly Dictionary<string, string> _arguments;
 
         public Arguments(Dictionary<string, string> arguments)
         {

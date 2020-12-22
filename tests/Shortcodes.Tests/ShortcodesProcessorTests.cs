@@ -3,11 +3,11 @@ using Xunit;
 
 namespace Shortcodes.Tests
 {
-    public class ParserTests
+    public class ShortcodesProcessorTests
     {
         private readonly NamedShortcodeProvider _provider;
 
-        public ParserTests()
+        public ShortcodesProcessorTests()
         {
             _provider = new NamedShortcodeProvider
             {

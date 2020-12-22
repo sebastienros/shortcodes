@@ -2,11 +2,15 @@
 {
     public class RawText : Node
     {
-        public RawText(string text)
+        public RawText(string buffer, int offset, int count)
         {
-            Text = text;
+            Buffer = buffer;
+            Offset = offset;
+            Count = count;
         }
 
-        public string Text { get; }
+        public string Buffer { get; }
+        public int Offset { get; }
+        public int Count { get; }
     }
 }

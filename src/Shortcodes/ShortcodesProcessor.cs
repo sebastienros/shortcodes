@@ -54,9 +54,9 @@ namespace Shortcodes
                 context = new Context();
             }
 
-            // Scan for tags
-            var scanner = new Scanner(input);
-            var nodes = scanner.Scan();
+            // Parse nodes
+            var parser = new ShortcodesParser();
+            var nodes = parser.Parse(input);
 
             return await FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
         }
@@ -100,7 +100,7 @@ namespace Shortcodes
                     {
                         var text = node as RawText;
 
-                        sb.Builder.Append(text.Text);
+                        sb.Builder.Append(text.Buffer, text.Offset, text.Count);
                     }
 
                     cursor += 1;
@@ -264,7 +264,7 @@ namespace Shortcodes
             switch (start)
             {
                 case RawText raw:
-                    return raw.Text;
+                    return raw.Buffer.Substring(raw.Offset, raw.Count);
 
                 case Shortcode code:
                     foreach (var provider in Providers)
