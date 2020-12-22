@@ -11,30 +11,26 @@ namespace Shortcodes
      * arguments    => identifer '=' literal
      * literal      => STRING | NUMBER 
      */
-    public class ShortcodesParser : Parser<List<Node>>
+    public class ShortcodesParser : Parser<IEnumerable<Node>>
     {
         private ShortcodesScanner _scanner;
 
-        public override List<Node> Parse(string text)
+        public override IEnumerable<Node> Parse(string text)
         {
             _scanner = new ShortcodesScanner(text);
 
             return ParseNodes();
         }
 
-        private List<Node> ParseNodes()
+        private IEnumerable<Node> ParseNodes()
         {
-            var nodes = new List<Node>();
-
-            var start = _scanner.Cursor.Position;
-
             while (!_scanner.Cursor.Eof)
             {
                 var shortcode = ParseShortcode();
 
                 if (shortcode != null)
                 {
-                    nodes.Add(shortcode);
+                    yield return shortcode;
                 }
                 else
                 {
@@ -45,20 +41,16 @@ namespace Shortcodes
                         throw new ParseException("Text didn't match any expected sequence.", _scanner.Cursor.Position);
                     }
 
-                    nodes.Add(rawText);
+                    yield return rawText;
                 }
             }
-
-            return nodes;
         }
 
         private RawText ParseRawText()
         {
-            var rawText = _scanner.ReadRawText();
-
-            if (rawText)
+            if (_scanner.ReadRawText(out var rawText))
             {
-                return new RawText(_scanner.Buffer, rawText.Token.Start.Offset, rawText.Token.Span.Length);
+                return new RawText(_scanner.Buffer, rawText.Start.Offset, rawText.Span.Length);
             }
 
             return null;
@@ -111,9 +103,7 @@ namespace Shortcodes
 
             _scanner.SkipWhiteSpace();
 
-            var identifier = _scanner.ReadIdentifier();
-            
-            if (!identifier)
+            if (!_scanner.ReadIdentifier(out var identifier))
             {
                 _scanner.Cursor.RollbackPosition();
 
@@ -129,46 +119,39 @@ namespace Shortcodes
             // Arguments?
             while (!_scanner.Cursor.Eof && !_scanner.Cursor.Match(']'))
             {
-                ScanResult<string> argIdentifier;
-                ScanResult<string> value;
-
                 // Record location in case it doesn't have a value
                 _scanner.Cursor.RecordPosition();
 
-                var resultString = _scanner.ReadQuotedString();
-                if (resultString)
+                if (_scanner.ReadQuotedString(out var resultString))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(resultString.Token.Span[1..^1]).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(resultString.Span[1..^1]).ToString();
 
                     argumentIndex += 1;
                 }
-                else if (argIdentifier = _scanner.ReadIdentifier())
+                else if (_scanner.ReadIdentifier(out var argIdentifier))
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = argIdentifier.Token.Span.ToString();
+                    var argumentName = argIdentifier.Span.ToString();
 
                     // It might just be a value
-                    if (_scanner.ReadText("="))
+                    if (_scanner.ReadText("=", out _))
                     {
                         _scanner.SkipWhiteSpace();
 
-                        ScanResult<string> stringValue;
-                        ScanResult<string> otherValue;
-
-                        if (stringValue = _scanner.ReadQuotedString())
+                        if (_scanner.ReadQuotedString(out var stringValue))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(stringValue.Token.Span[1..^1]).ToString();
+                            arguments[argumentName] = Character.DecodeString(stringValue.Span[1..^1]).ToString();
                         }
-                        else if (otherValue = _scanner.ReadValue())
+                        else if (_scanner.ReadValue(out var otherValue))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = otherValue.Token.Span.ToString();
+                            arguments[argumentName] = otherValue.Span.ToString();
                         }
                         else
                         {
@@ -185,11 +168,11 @@ namespace Shortcodes
 
                         _scanner.Cursor.RollbackPosition();
 
-                        if (value = _scanner.ReadValue())
+                        if (_scanner.ReadValue(out var value))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = value.Token.Span.ToString();
+                            arguments[argumentIndex.ToString()] = value.Span.ToString();
 
                             argumentIndex += 1;
                         }
@@ -201,13 +184,13 @@ namespace Shortcodes
                         }
                     }
                 }
-                else if (value = _scanner.ReadValue())
+                else if (_scanner.ReadValue(out var value))
                 {
                     _scanner.Cursor.CommitPosition();
 
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = value.Token.Span.ToString();
+                    arguments[argumentIndex.ToString()] = value.Span.ToString();
 
                     argumentIndex += 1;
                 }
@@ -244,7 +227,7 @@ namespace Shortcodes
                 _scanner.Cursor.Advance();
             } while (_scanner.Cursor.Match("]"));
 
-            shortcode = new Shortcode(identifier.Token.Span.ToString(), style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
+            shortcode = new Shortcode(identifier.Span.ToString(), style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
             shortcode.Arguments = new Arguments(arguments);
 
             _scanner.Cursor.CommitPosition();

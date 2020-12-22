@@ -9,8 +9,10 @@ namespace Shortcodes
 
         }
 
-        public ScanResult<string> ReadRawText()
+        public bool ReadRawText(out Token<string> token)
         {
+            token = Token<string>.Empty;
+
             var start = Cursor.Position;
 
             Cursor.RecordPosition();
@@ -36,11 +38,15 @@ namespace Shortcodes
 
             Cursor.CommitPosition();
 
-            return EmitToken(null, start, Cursor.Position);
+            token = EmitToken(null, start, Cursor.Position);
+
+            return true;
         } 
 
-        public ScanResult<string> ReadValue()
+        public bool ReadValue(out Token<string> token)
         {
+            token = Token<string>.Empty;
+
             var start = Cursor.Position;
 
             if (Cursor.Match("]") || Cursor.Match("'") || Cursor.Match("\""))
@@ -70,7 +76,8 @@ namespace Shortcodes
                 return false;
             }
 
-            return EmitToken("value", start, Cursor.Position);
+            token = EmitToken("value", start, Cursor.Position);
+            return true;
         }
     }
 }
