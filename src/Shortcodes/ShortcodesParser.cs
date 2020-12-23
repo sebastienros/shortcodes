@@ -68,7 +68,7 @@ namespace Shortcodes
 
             var style = ShortcodeStyle.Open;
 
-            if (!_scanner.Cursor.Match("["))
+            if (!_scanner.Cursor.Match('['))
             {
                 return null;
             }
@@ -83,10 +83,10 @@ namespace Shortcodes
             {
                 openBraces += 1;
                 _scanner.Cursor.Advance();
-            } while (_scanner.Cursor.Match("["));
+            } while (_scanner.Cursor.Match('['));
 
             // Is it a closing tag?
-            if (_scanner.Cursor.Match("/"))
+            if (_scanner.Cursor.Match('/'))
             {
                 style = ShortcodeStyle.Close;
 
@@ -213,7 +213,7 @@ namespace Shortcodes
             }
 
             // Expect closing bracket
-            if (!_scanner.Cursor.Match("]"))
+            if (!_scanner.Cursor.Match(']'))
             {
                 _scanner.Cursor.RollbackPosition();
 
@@ -225,7 +225,7 @@ namespace Shortcodes
             {
                 closeBraces += 1;
                 _scanner.Cursor.Advance();
-            } while (_scanner.Cursor.Match("]"));
+            } while (_scanner.Cursor.Match(']'));
 
             shortcode = new Shortcode(identifier.Text, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
             shortcode.Arguments = new Arguments(arguments);
