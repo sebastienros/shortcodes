@@ -6,7 +6,7 @@ namespace Shortcodes.Tests
 {
     public class ShortcodesParserTests
     {
-        private readonly StringBuilder _builder = new StringBuilder();
+        private readonly StringBuilder _builder = new();
 
         private string EncodeNodes(IEnumerable<Node> nodes)
         {

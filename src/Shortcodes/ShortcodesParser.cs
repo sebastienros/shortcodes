@@ -13,6 +13,8 @@ namespace Shortcodes
      */
     public class ShortcodesParser : Parser<List<Node>>
     {
+        private readonly TokenResult result = new TokenResult();
+
         private ShortcodesScanner _scanner;
 
         public override List<Node> Parse(string text)
@@ -52,9 +54,9 @@ namespace Shortcodes
 
         private RawText ParseRawText()
         {
-            if (_scanner.ReadRawText(out var rawText))
+            if (_scanner.ReadRawText(result))
             {
-                return new RawText(_scanner.Buffer, rawText.Start.Offset, rawText.Length);
+                return new RawText(_scanner.Buffer, result.Token.Start.Offset, result.Token.Length);
             }
 
             return null;
@@ -72,27 +74,26 @@ namespace Shortcodes
 
             var style = ShortcodeStyle.Open;
 
-            if (!_scanner.Cursor.Match('['))
+            // Start position of the shortcode
+            var start = _scanner.Cursor.Position;
+
+            if (!_scanner.ReadChar('['))
             {
                 return null;
             }
 
-            // Start position of the shortcode
-            var start = _scanner.Cursor.Position;
+            openBraces += 1;
 
             // Read all '[' so we can detect escaped tags
-            do
+            while (_scanner.ReadChar('['))
             {
                 openBraces += 1;
-                _scanner.Cursor.Advance();
-            } while (_scanner.Cursor.Match('['));
+            }
 
             // Is it a closing tag?
-            if (_scanner.Cursor.Match('/'))
+            if (_scanner.ReadChar('/'))
             {
                 style = ShortcodeStyle.Close;
-
-                _scanner.Cursor.Advance();
             }
 
             // Reach Eof before end of shortcode
@@ -105,12 +106,14 @@ namespace Shortcodes
 
             _scanner.SkipWhiteSpace();
 
-            if (!_scanner.ReadIdentifier(out var identifier))
+            if (!_scanner.ReadIdentifier(result))
             {
                 _scanner.Cursor.ResetPosition(start);
 
                 return null;
             }
+
+            var identifier = result.Token;
 
             _scanner.SkipWhiteSpace();
 
@@ -119,41 +122,41 @@ namespace Shortcodes
             int argumentIndex = 0;
 
             // Arguments?
-            while (!_scanner.Cursor.Match(']'))
+            while (!_scanner.Cursor.Eof)
             {
                 // Record location in case it doesn't have a value
                 var argumentStart = _scanner.Cursor.Position;
 
-                if (_scanner.ReadQuotedString(out var resultString))
+                if (_scanner.ReadQuotedString(result))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(resultString.Buffer.Substring(resultString.Start.Offset + 1, resultString.Length - 2));
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(result.Token.Buffer.Substring(result.Token.Start.Offset + 1, result.Token.Length - 2));
 
                     argumentIndex += 1;
                 }
-                else if (_scanner.ReadIdentifier(out var argIdentifier))
+                else if (_scanner.ReadIdentifier(result))
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = argIdentifier.Text;
-
+                    var argumentName = result.Token.Text;
+                    
                     // It might just be a value
-                    if (_scanner.ReadText("=", out _))
+                    if (_scanner.ReadChar('='))
                     {
                         _scanner.SkipWhiteSpace();
 
-                        if (_scanner.ReadQuotedString(out var stringValue))
+                        if (_scanner.ReadQuotedString(result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(stringValue.Buffer.Substring(stringValue.Start.Offset + 1, stringValue.Length - 2));
+                            arguments[argumentName] = Character.DecodeString(result.Token.Buffer.Substring(result.Token.Start.Offset + 1, result.Token.Length - 2));
                         }
-                        else if (_scanner.ReadValue(out var otherValue))
+                        else if (_scanner.ReadValue(result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = otherValue.Text.ToString();
+                            arguments[argumentName] = result.Token.Text.ToString();
                         }
                         else
                         {
@@ -165,14 +168,14 @@ namespace Shortcodes
                     else
                     {
                         // Positional argument that looks like an identifier
-
+                        
                         _scanner.Cursor.ResetPosition(argumentStart);
 
-                        if (_scanner.ReadValue(out var value))
+                        if (_scanner.ReadValue(result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = value.Text;
+                            arguments[argumentIndex.ToString()] = result.Token.Text;
 
                             argumentIndex += 1;
                         }
@@ -184,44 +187,47 @@ namespace Shortcodes
                         }
                     }
                 }
-                else if (_scanner.ReadValue(out var value))
+                else if (_scanner.ReadValue(result))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = value.Text;
+                    arguments[argumentIndex.ToString()] = result.Token.Text;
 
                     argumentIndex += 1;
                 }
-                else
+                else if (_scanner.Cursor.Match("/]"))
+                {
+                    style = ShortcodeStyle.SelfClosing;
+                    _scanner.Cursor.Advance();
+                    break;
+                }
+                else if (_scanner.Cursor.Match(']'))
                 {
                     break;
+                }
+                else
+                {
+                    _scanner.Cursor.ResetPosition(start);
+                    return null;
                 }
 
                 _scanner.SkipWhiteSpace();
             }
 
-            // Is it a self-closing tag?
-            if (_scanner.Cursor.Match("/]"))
-            {
-                style = ShortcodeStyle.SelfClosing;
-
-                _scanner.Cursor.Advance();
-            }
-
-            // Expect closing bracket
-            if (!_scanner.Cursor.Match(']'))
+            // If we exited the loop due to EOF, exit
+            if (_scanner.Cursor.Eof || !_scanner.ReadChar(']'))
             {
                 _scanner.Cursor.ResetPosition(start);
-
                 return null;
             }
 
+            closeBraces += 1;
+
             // Read all ']' so we can detect escaped tags
-            do
+            while (_scanner.ReadChar(']'))
             {
                 closeBraces += 1;
-                _scanner.Cursor.Advance();
-            } while (_scanner.Cursor.Match(']'));
+            } 
 
             shortcode = new Shortcode(identifier.Text, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
             shortcode.Arguments = new Arguments(arguments);

@@ -9,10 +9,8 @@ namespace Shortcodes
 
         }
 
-        public bool ReadRawText(out Token<string> token)
+        public bool ReadRawText(TokenResult result = null)
         {
-            token = Token<string>.Empty;
-
             var start = Cursor.Position;
 
             while (Cursor.Match('['))
@@ -32,17 +30,13 @@ namespace Shortcodes
                 return false;
             }
 
-            token = EmitToken(null, start, Cursor.Position);
+            result?.SetToken("text", Buffer, start, Cursor.Position);
 
             return true;
         } 
 
-        public bool ReadValue(out Token<string> token)
+        public bool ReadValue(TokenResult result = null)
         {
-            token = Token<string>.Empty;
-
-            var start = Cursor.Position;
-
             if (Cursor.Match(']') || Cursor.Match('\'') || Cursor.Match('"'))
             {
                 return false;
@@ -52,6 +46,8 @@ namespace Shortcodes
             {
                 return false;
             }
+
+            var start = Cursor.Position;
 
             while (!Character.IsWhiteSpace(Cursor.Peek()) && !Cursor.Match(']'))
             {
@@ -70,7 +66,8 @@ namespace Shortcodes
                 return false;
             }
 
-            token = EmitToken("value", start, Cursor.Position);
+            result?.SetToken("value", Buffer, start, Cursor.Position);
+
             return true;
         }
     }
