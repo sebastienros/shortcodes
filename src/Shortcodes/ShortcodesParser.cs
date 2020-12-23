@@ -119,7 +119,7 @@ namespace Shortcodes
             int argumentIndex = 0;
 
             // Arguments?
-            while (!_scanner.Cursor.Eof && !_scanner.Cursor.Match(']'))
+            while (!_scanner.Cursor.Match(']'))
             {
                 // Record location in case it doesn't have a value
                 var argumentStart = _scanner.Cursor.Position;
