@@ -59,12 +59,12 @@ namespace Shortcodes
             }
 
             // Parse nodes
-            var nodes = _parser.Parse(input).ToArray();
+            var nodes = _parser.Parse(input);
 
-            return FoldClosingTagsAsync(input, nodes, 0, nodes.Length, context);
+            return FoldClosingTagsAsync(input, nodes, 0, nodes.Count, context);
         }
 
-        private async ValueTask<string> FoldClosingTagsAsync(string input, Node[] nodes, int index, int length, Context context)
+        private async ValueTask<string> FoldClosingTagsAsync(string input, List<Node> nodes, int index, int length, Context context)
         {
             // This method should not be called when nodes has a single RawText element.
             // It's implementation assumes at least two nodes are provided.
@@ -202,8 +202,7 @@ namespace Shortcodes
                         // Fold the inner nodes
                         else
                         {
-                            var content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
-                            start.Content = content;
+                            start.Content = await FoldClosingTagsAsync(input, nodes, head + 1, tail - head - 1, context);
                             await AppendAsync(sb.Builder, input, start, end, context);
                         }
                     }

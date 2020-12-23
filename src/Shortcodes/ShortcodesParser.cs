@@ -11,26 +11,28 @@ namespace Shortcodes
      * arguments    => identifer '=' literal
      * literal      => STRING | NUMBER 
      */
-    public class ShortcodesParser : Parser<IEnumerable<Node>>
+    public class ShortcodesParser : Parser<List<Node>>
     {
         private ShortcodesScanner _scanner;
 
-        public override IEnumerable<Node> Parse(string text)
+        public override List<Node> Parse(string text)
         {
             _scanner = new ShortcodesScanner(text);
 
             return ParseNodes();
         }
 
-        private IEnumerable<Node> ParseNodes()
+        private List<Node> ParseNodes()
         {
+            var nodes = new List<Node>(8);
+
             while (!_scanner.Cursor.Eof)
             {
                 var shortcode = ParseShortcode();
 
                 if (shortcode != null)
                 {
-                    yield return shortcode;
+                    nodes.Add(shortcode);
                 }
                 else
                 {
@@ -41,9 +43,11 @@ namespace Shortcodes
                         throw new ParseException("Text didn't match any expected sequence.", _scanner.Cursor.Position);
                     }
 
-                    yield return rawText;
+                    nodes.Add(rawText);
                 }
             }
+
+            return nodes;
         }
 
         private RawText ParseRawText()
