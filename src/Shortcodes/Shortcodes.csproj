@@ -3,6 +3,10 @@
     <LangVersion>8.0</LangVersion>
     <AssemblyOriginatorKeyFile>Shortcodes.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
+
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\parlot\src\Parlot\Parlot.csproj" />

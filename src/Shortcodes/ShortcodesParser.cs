@@ -77,8 +77,6 @@ namespace Shortcodes
                 return null;
             }
 
-            _scanner.Cursor.RecordPosition();
-
             // Start position of the shortcode
             var start = _scanner.Cursor.Position;
 
@@ -100,7 +98,7 @@ namespace Shortcodes
             // Reach Eof before end of shortcode
             if (_scanner.Cursor.Eof)
             {
-                _scanner.Cursor.RollbackPosition();
+                _scanner.Cursor.ResetPosition(start);
 
                 return null;
             }
@@ -109,7 +107,7 @@ namespace Shortcodes
 
             if (!_scanner.ReadIdentifier(out var identifier))
             {
-                _scanner.Cursor.RollbackPosition();
+                _scanner.Cursor.ResetPosition(start);
 
                 return null;
             }
@@ -124,7 +122,7 @@ namespace Shortcodes
             while (!_scanner.Cursor.Eof && !_scanner.Cursor.Match(']'))
             {
                 // Record location in case it doesn't have a value
-                _scanner.Cursor.RecordPosition();
+                var argumentStart = _scanner.Cursor.Position;
 
                 if (_scanner.ReadQuotedString(out var resultString))
                 {
@@ -159,9 +157,7 @@ namespace Shortcodes
                         }
                         else
                         {
-                            // Pop position twice
-                            _scanner.Cursor.RollbackPosition();
-                            _scanner.Cursor.RollbackPosition();
+                            _scanner.Cursor.ResetPosition(start);
 
                             return null;
                         }
@@ -170,7 +166,7 @@ namespace Shortcodes
                     {
                         // Positional argument that looks like an identifier
 
-                        _scanner.Cursor.RollbackPosition();
+                        _scanner.Cursor.ResetPosition(argumentStart);
 
                         if (_scanner.ReadValue(out var value))
                         {
@@ -182,7 +178,7 @@ namespace Shortcodes
                         }
                         else
                         {
-                            _scanner.Cursor.RollbackPosition();
+                            _scanner.Cursor.ResetPosition(start);
 
                             break;
                         }
@@ -190,8 +186,6 @@ namespace Shortcodes
                 }
                 else if (_scanner.ReadValue(out var value))
                 {
-                    _scanner.Cursor.CommitPosition();
-
                     arguments ??= CreateArgumentsDictionary();
 
                     arguments[argumentIndex.ToString()] = value.Text;
@@ -200,8 +194,6 @@ namespace Shortcodes
                 }
                 else
                 {
-                    _scanner.Cursor.RollbackPosition();
-                    
                     break;
                 }
 
@@ -219,7 +211,7 @@ namespace Shortcodes
             // Expect closing bracket
             if (!_scanner.Cursor.Match(']'))
             {
-                _scanner.Cursor.RollbackPosition();
+                _scanner.Cursor.ResetPosition(start);
 
                 return null;
             }
@@ -233,8 +225,6 @@ namespace Shortcodes
 
             shortcode = new Shortcode(identifier.Text, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
             shortcode.Arguments = new Arguments(arguments);
-
-            _scanner.Cursor.CommitPosition();
 
             return shortcode;
 

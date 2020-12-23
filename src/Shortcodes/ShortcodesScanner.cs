@@ -15,14 +15,12 @@ namespace Shortcodes
 
             var start = Cursor.Position;
 
-            Cursor.RecordPosition();
-
-            while (!Cursor.Eof && Cursor.Match('['))
+            while (Cursor.Match('['))
             {
                 Cursor.Advance();
             }
 
-            while (!Cursor.Eof && !Cursor.Match('['))
+            while (!Cursor.Match('[') && !Cursor.Eof)
             {
                 Cursor.Advance();
             }
@@ -31,12 +29,8 @@ namespace Shortcodes
 
             if (length == 0)
             {
-                Cursor.RollbackPosition();
-
                 return false;
             }
-
-            Cursor.CommitPosition();
 
             token = EmitToken(null, start, Cursor.Position);
 
