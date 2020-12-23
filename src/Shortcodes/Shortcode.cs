@@ -6,12 +6,7 @@ namespace Shortcodes
     {
         public Shortcode(string identifier, ShortcodeStyle style, int openBraces, int closeBraces, int sourceIndex, int sourceLength)
         {
-            if (identifier == null)
-            {
-                throw new ArgumentNullException(nameof(identifier));
-            }
-
-            Identifier = identifier;
+            Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier));
             Style = style;
             Content = null;
             OpenBraces = openBraces;
