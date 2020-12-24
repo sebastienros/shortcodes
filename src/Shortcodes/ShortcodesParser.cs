@@ -56,7 +56,7 @@ namespace Shortcodes
         {
             if (_scanner.ReadRawText(result))
             {
-                return new RawText(_scanner.Buffer, result.Token.Start.Offset, result.Token.Length);
+                return new RawText(_scanner.Buffer, result.Start.Offset, result.Length);
             }
 
             return null;
@@ -113,7 +113,7 @@ namespace Shortcodes
                 return null;
             }
 
-            var identifier = result.Token;
+            var identifier = result.Text;
 
             _scanner.SkipWhiteSpace();
 
@@ -131,7 +131,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(result.Token.Buffer.Substring(result.Token.Start.Offset + 1, result.Token.Length - 2));
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(result.Span.Slice(1, result.Length - 2)).ToString();
 
                     argumentIndex += 1;
                 }
@@ -139,7 +139,7 @@ namespace Shortcodes
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = result.Token.Text;
+                    var argumentName = result.Text;
                     
                     // It might just be a value
                     if (_scanner.ReadChar('='))
@@ -150,13 +150,13 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(result.Token.Buffer.Substring(result.Token.Start.Offset + 1, result.Token.Length - 2));
+                            arguments[argumentName] = Character.DecodeString(result.Span.Slice(1, result.Length - 2)).ToString();
                         }
                         else if (_scanner.ReadValue(result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = result.Token.Text.ToString();
+                            arguments[argumentName] = result.Text.ToString();
                         }
                         else
                         {
@@ -175,7 +175,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = result.Token.Text;
+                            arguments[argumentIndex.ToString()] = result.Text;
 
                             argumentIndex += 1;
                         }
@@ -191,7 +191,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = result.Token.Text;
+                    arguments[argumentIndex.ToString()] = result.Text;
 
                     argumentIndex += 1;
                 }
@@ -229,7 +229,7 @@ namespace Shortcodes
                 closeBraces += 1;
             } 
 
-            shortcode = new Shortcode(identifier.Text, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
+            shortcode = new Shortcode(identifier, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
             shortcode.Arguments = new Arguments(arguments);
 
             return shortcode;
