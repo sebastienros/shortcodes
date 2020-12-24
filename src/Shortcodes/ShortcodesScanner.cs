@@ -49,7 +49,7 @@ namespace Shortcodes
 
             var start = Cursor.Position;
 
-            while (!Character.IsWhiteSpace(Cursor.Peek()) && !Cursor.Match(']'))
+            while (!Character.IsWhiteSpaceOrNewLine(Cursor.Current) && !Cursor.Match(']'))
             {
                 if (Cursor.Eof)
                 {
