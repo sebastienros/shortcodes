@@ -229,8 +229,15 @@ namespace Shortcodes
                 closeBraces += 1;
             } 
 
-            shortcode = new Shortcode(identifier, style, openBraces, closeBraces, start.Offset, _scanner.Cursor.Position - start - 1);
-            shortcode.Arguments = new Arguments(arguments);
+            shortcode = new Shortcode(
+                identifier, 
+                style, 
+                openBraces, 
+                closeBraces, 
+                start.Offset, 
+                _scanner.Cursor.Position - start - 1, 
+                new Arguments(arguments)
+                );
 
             return shortcode;
 
