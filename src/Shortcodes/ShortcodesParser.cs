@@ -13,7 +13,7 @@ namespace Shortcodes
      */
     public class ShortcodesParser : Parser<List<Node>>
     {
-        private readonly TokenResult result = new TokenResult();
+        private readonly TokenResult _result = new TokenResult();
 
         private ShortcodesScanner _scanner;
 
@@ -54,9 +54,9 @@ namespace Shortcodes
 
         private RawText ParseRawText()
         {
-            if (_scanner.ReadRawText(result))
+            if (_scanner.ReadRawText(_result))
             {
-                return new RawText(_scanner.Buffer, result.Start.Offset, result.Length);
+                return new RawText(_scanner.Buffer, _result.Start.Offset, _result.Length);
             }
 
             return null;
@@ -106,14 +106,14 @@ namespace Shortcodes
 
             _scanner.SkipWhiteSpace();
 
-            if (!_scanner.ReadIdentifier(result))
+            if (!_scanner.ReadIdentifier(_result))
             {
                 _scanner.Cursor.ResetPosition(start);
 
                 return null;
             }
 
-            var identifier = result.Text;
+            var identifier = _result.Text;
 
             _scanner.SkipWhiteSpace();
 
@@ -127,36 +127,36 @@ namespace Shortcodes
                 // Record location in case it doesn't have a value
                 var argumentStart = _scanner.Cursor.Position;
 
-                if (_scanner.ReadQuotedString(result))
+                if (_scanner.ReadQuotedString(_result))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(result.Span.Slice(1, result.Length - 2)).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(_result.Span.Slice(1, _result.Length - 2)).ToString();
 
                     argumentIndex += 1;
                 }
-                else if (_scanner.ReadIdentifier(result))
+                else if (_scanner.ReadIdentifier(_result))
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = result.Text;
+                    var argumentName = _result.Text;
                     
                     // It might just be a value
                     if (_scanner.ReadChar('='))
                     {
                         _scanner.SkipWhiteSpace();
 
-                        if (_scanner.ReadQuotedString(result))
+                        if (_scanner.ReadQuotedString(_result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(result.Span.Slice(1, result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(_result.Span.Slice(1, _result.Length - 2)).ToString();
                         }
-                        else if (_scanner.ReadValue(result))
+                        else if (_scanner.ReadValue(_result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = result.Text.ToString();
+                            arguments[argumentName] = _result.Text.ToString();
                         }
                         else
                         {
@@ -171,11 +171,11 @@ namespace Shortcodes
                         
                         _scanner.Cursor.ResetPosition(argumentStart);
 
-                        if (_scanner.ReadValue(result))
+                        if (_scanner.ReadValue(_result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = result.Text;
+                            arguments[argumentIndex.ToString()] = _result.Text;
 
                             argumentIndex += 1;
                         }
@@ -187,11 +187,11 @@ namespace Shortcodes
                         }
                     }
                 }
-                else if (_scanner.ReadValue(result))
+                else if (_scanner.ReadValue(_result))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = result.Text;
+                    arguments[argumentIndex.ToString()] = _result.Text;
 
                     argumentIndex += 1;
                 }

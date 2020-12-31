@@ -6,6 +6,8 @@ namespace Shortcodes
 {
     public struct Arguments : IEnumerable<KeyValuePair<string, string>>
     {
+        public static Arguments Empty = new Arguments(new Dictionary<string, string>());
+
         private readonly Dictionary<string, string> _arguments;
 
         public Arguments(Dictionary<string, string> arguments)

@@ -17,8 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{46FB729C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shortcodes.Benchmarks", "tests\Shortcodes.Benchmarks\Shortcodes.Benchmarks.csproj", "{D7B1F710-04EC-49F1-BE79-FC4A83749E69}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parlot", "..\parlot\src\Parlot\Parlot.csproj", "{F31BB513-E2B0-4BBC-A116-3BC7E4B75A8F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,10 +35,6 @@ Global
 		{D7B1F710-04EC-49F1-BE79-FC4A83749E69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7B1F710-04EC-49F1-BE79-FC4A83749E69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7B1F710-04EC-49F1-BE79-FC4A83749E69}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F31BB513-E2B0-4BBC-A116-3BC7E4B75A8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F31BB513-E2B0-4BBC-A116-3BC7E4B75A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F31BB513-E2B0-4BBC-A116-3BC7E4B75A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F31BB513-E2B0-4BBC-A116-3BC7E4B75A8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
