@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{46FB729C
 		.github\workflows\publish.yml = .github\workflows\publish.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shortcodes.Benchmarks", "tests\Shortcodes.Benchmarks\Shortcodes.Benchmarks.csproj", "{D7B1F710-04EC-49F1-BE79-FC4A83749E69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shortcodes.Benchmarks", "tests\Shortcodes.Benchmarks\Shortcodes.Benchmarks.csproj", "{D7B1F710-04EC-49F1-BE79-FC4A83749E69}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

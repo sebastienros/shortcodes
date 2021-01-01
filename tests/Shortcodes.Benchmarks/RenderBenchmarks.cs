@@ -22,16 +22,16 @@ namespace Shortcodes.Benchmarks
         }
 
         [Benchmark]
-        public async Task<string> Nop() => await _processor.EvaluateAsync("Lorem ipsum dolor est");
+        public ValueTask<string> Nop() => _processor.EvaluateAsync("Lorem ipsum dolor est");
 
         [Benchmark]
-        public async Task<string> Upper() => await _processor.EvaluateAsync("Lorem [upper]ipsum[/upper] dolor est");
+        public ValueTask<string> Upper() => _processor.EvaluateAsync("Lorem [upper]ipsum[/upper] dolor est");
 
         [Benchmark]
-        public async Task<string> Unkown() => await _processor.EvaluateAsync("Lorem [lower]ipsum[/lower] dolor est");
+        public ValueTask<string> Unkown() => _processor.EvaluateAsync("Lorem [lower]ipsum[/lower] dolor est");
 
         [Benchmark]
-        public async Task<string> Big() => await _processor.EvaluateAsync("Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est ");
+        public ValueTask<string> Big() => _processor.EvaluateAsync("Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem [upper]ipsum[/upper] dolor est Lorem [upper] Lorem [upper]ipsum[/upper] dolor est [/upper] dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est Lorem ipsum dolor est ");
 
     }
 }
