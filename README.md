@@ -45,7 +45,7 @@ This is an Hello world!
 
 ### Named arguments
 
-Arguments can contain ay character, but need to be quoted either with `'` or `"` if they contain spaces.
+Arguments can contain any character, but need to be quoted either with `'` or `"` if they contain spaces.
 Strings can use standard string escape sequences like `\u03A9` and `\n`.
 
 ```c#
