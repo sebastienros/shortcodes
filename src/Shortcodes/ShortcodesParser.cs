@@ -11,16 +11,15 @@ namespace Shortcodes
      * arguments    => identifer '=' literal
      * literal      => STRING | NUMBER 
      */
-    public class ShortcodesParser : Parser<List<Node>>
+    public class ShortcodesParser
     {
         private readonly TokenResult _result = new TokenResult();
 
         private ShortcodesScanner _scanner;
 
-        public override List<Node> Parse(string text)
+        public List<Node> Parse(string input)
         {
-            _scanner = new ShortcodesScanner(text);
-
+            _scanner = new ShortcodesScanner(input);
             return ParseNodes();
         }
 
@@ -56,7 +55,7 @@ namespace Shortcodes
         {
             if (_scanner.ReadRawText(_result))
             {
-                return new RawText(_scanner.Buffer, _result.Start.Offset, _result.Length);
+                return new RawText(_scanner.Buffer, _result.Start, _result.Length);
             }
 
             return null;
@@ -131,7 +130,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(_result.Span.Slice(1, _result.Length - 2)).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
 
                     argumentIndex += 1;
                 }
@@ -150,7 +149,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(_result.Span.Slice(1, _result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
                         }
                         else if (_scanner.ReadValue(_result))
                         {

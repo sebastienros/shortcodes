@@ -133,7 +133,6 @@ namespace Shortcodes.Tests
         [InlineData("[h a='\\xE9']", "[h a=é]")]
         // This is not a valid string (invalid escape sequence), and not a valid value as it start with '
         [InlineData("[h a='\\a']", "R(10)")]
-        [InlineData("[h a='\\0']", "[h a=\0]")]
         [InlineData("[h a='\\\\']", "[h a=\\]")]
         [InlineData("[h a='\\\"']", "[h a=\"]")]
         [InlineData("[h a='\\\'']", "[h a=']")]
@@ -153,7 +152,7 @@ namespace Shortcodes.Tests
 
         [Theory]
         [InlineData("[h a='\\u0']", "R(11)")]
-        [InlineData("[h a='\\xe']", "R(11)")]
+        [InlineData("[h a='\\xe']", "[h a=\xe]")]
         public void ShouldNotParseInvalidEscapeSequence(string input, string encoded)
         {
             var nodes = new ShortcodesParser().Parse(input);
