@@ -9,7 +9,7 @@ namespace Shortcodes
 
         }
 
-        public bool ReadRawText(TokenResult result = null)
+        public bool ReadRawText(out TokenResult result)
         {
             var start = Cursor.Offset;
 
@@ -27,26 +27,26 @@ namespace Shortcodes
 
             if (length == 0)
             {
-                result?.Fail();
+                result = TokenResult.Fail();
                 return false;
             }
 
-            result?.Succeed(Buffer, start, Cursor.Offset);
+            result = TokenResult.Succeed(Buffer, start, Cursor.Offset);
 
             return true;
         } 
 
-        public bool ReadValue(TokenResult result = null)
+        public bool ReadValue(out TokenResult result)
         {
             if (Cursor.Match(']') || Cursor.Match('\'') || Cursor.Match('"') || Character.IsWhiteSpaceOrNewLine(Cursor.Current))
             {
-                result?.Fail();
+                result = TokenResult.Fail();
                 return false;
             }
 
             if (Cursor.Match("/]"))
             {
-                result?.Fail();
+                result = TokenResult.Fail();
                 return false;
             }
 
@@ -56,14 +56,14 @@ namespace Shortcodes
             {
                 if (Cursor.Eof)
                 {
-                    result?.Fail();
+                    result = TokenResult.Fail();
                     return false;
                 }
 
                 Cursor.Advance();
             }
 
-            result?.Succeed(Buffer, start, Cursor.Offset);
+            result = TokenResult.Succeed(Buffer, start, Cursor.Offset);
 
             return true;
         }
