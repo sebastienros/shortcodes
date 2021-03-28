@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="all" />
-    <PackageReference Include="Parlot" Version="0.0.8" />
+    <PackageReference Include="Parlot" Version="0.0.12" />
   </ItemGroup>
 
 </Project>
