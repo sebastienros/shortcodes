@@ -7,7 +7,7 @@ namespace Shortcodes
 {
     public class NamedShortcodeProvider : IShortcodeProvider, IEnumerable
     {
-        private static readonly ValueTask<string> Null = new ValueTask<string>((string)null);
+        private static ValueTask<string> Null => new ValueTask<string>((string)null);
 
         private Dictionary<string, ShortcodeDelegate> Shortcodes { get; }
 
