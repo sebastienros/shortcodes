@@ -34,7 +34,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     ["hello"] = (args, content, ctx) => new ValueTask<string>("Hello world!")
 });
 
-Console.WriteLine(await process.EvaluateAsync("This is an [hello]"));
+Console.WriteLine(await processor.EvaluateAsync("This is an [hello]"));
 ```
 
 Which results in 
@@ -59,7 +59,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold text='bold text' 1234]"));
+Console.WriteLine(await processor.EvaluateAsync("[bold text='bold text' 1234]"));
 ```
 
 ### Content arguments
@@ -75,7 +75,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold]bold text[/bold]"));
+Console.WriteLine(await processor.EvaluateAsync("[bold]bold text[/bold]"));
 ```
 
 For single tags, the content is `null`. It means that you can detect if a shortcode was
@@ -96,7 +96,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold 'bold text']"));
+Console.WriteLine(await processor.EvaluateAsync("[bold 'bold text']"));
 ```
 
 ```
@@ -118,7 +118,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
     }
 });
 
-Console.WriteLine(await process.EvaluateAsync("[bold id='a' 'some text']"));
+Console.WriteLine(await processor.EvaluateAsync("[bold id='a' 'some text']"));
 ```
 
 ```
@@ -202,8 +202,8 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 
 app.Run((httpContext) =>
 {
-    var context = new Context({ ["HttpContext"] = httpContext });
-    var result = await process.EvaluateAsync("The current user is [username]", context);
+    var context = new Context(){ ["HttpContext"] = httpContext };
+    var result = await processor.EvaluateAsync("The current user is [username]", context);
     return context.Response.WriteAsync(result);
 });
 ```
