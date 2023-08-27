@@ -211,3 +211,10 @@ app.Run((httpContext) =>
 ```
 The current user is admin
 ```
+
+## Used by
+
+Shortcodes is known to be used in the following projects:
+- [Orchard Core CMS](https://github.com/OrchardCMS/OrchardCore) Open Source .NET modular framework and CMS
+
+_Please file an issue to be listed here._
