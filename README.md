@@ -13,6 +13,7 @@ Shortcodes processor for .NET with focus on performance and simplicity.
 <br>
 
 ## Contents
+
 - [Sample usage](#sample-usage)
 - [Used by](#used-by)
 
@@ -20,7 +21,7 @@ Shortcodes processor for .NET with focus on performance and simplicity.
 
 ## Sample usage
 
-Don't forget to include the __using__ statement:
+Don't forget to include the **using** statement:
 
 ```c#
 using Shortcodes;
@@ -37,7 +38,7 @@ var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 Console.WriteLine(await processor.EvaluateAsync("This is an [hello]"));
 ```
 
-Which results in 
+Which results in
 
 ```
 This is an Hello world!
@@ -106,7 +107,6 @@ Console.WriteLine(await processor.EvaluateAsync("[bold 'bold text']"));
 Named and positional arguments can be mixed together. Each time an argument doesn't
 have a name, the index is incremented.
 
-
 ```c#
 var processor = new ShortcodesProcessor(new NamedShortcodeProvider
 {
@@ -127,14 +127,14 @@ Console.WriteLine(await processor.EvaluateAsync("[bold id='a' 'some text']"));
 
 ### Escaping tags
 
-In case you want to render a shortcode instead of evaluating it, you can double the 
+In case you want to render a shortcode instead of evaluating it, you can double the
 opening and closing braces.
 
 ```
 [[bold] some text to show [/bold]]
 ```
 
-Will then be rendered as 
+Will then be rendered as
 
 ```
 [bold] some text to show [/bold]
@@ -146,7 +146,7 @@ And for single tags:
 [[bold 'text']]
 ```
 
-Will be rendered as 
+Will be rendered as
 
 ```
 [bold 'text']
@@ -178,11 +178,11 @@ Will be rendered as
 
 ### Context object
 
-A __Context__ object can be passed when evaluating a template. This object
+A **Context** object can be passed when evaluating a template. This object
 is shared across all shortcodes
 
 A common usage is to pass custom data that might be used by some shortcodes, like
-the current `HttpContext` if a template is running in a web application and needs 
+the current `HttpContext` if a template is running in a web application and needs
 to access the current request.
 
 Another usage is to use it as a bag of values that can be shared across shortcodes.
@@ -211,3 +211,9 @@ app.Run((httpContext) =>
 ```
 The current user is admin
 ```
+
+## Used by
+
+Shortcodes is known to be used in the following projects:
+
+- [Orchard Core CMS](https://github.com/OrchardCMS/OrchardCore) Open Source .NET modular framework and CMS
