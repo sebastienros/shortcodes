@@ -147,7 +147,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset, _result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset + 1, _result.Length - 2)).ToString();
                         }
                         else if (_scanner.ReadValue(out _result))
                         {
@@ -165,7 +165,6 @@ namespace Shortcodes
                     else
                     {
                         // Positional argument that looks like an identifier
-
                         _scanner.Cursor.ResetPosition(argumentStart);
 
                         if (_scanner.ReadValue(out _result))
