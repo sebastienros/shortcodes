@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Parlot;
+using System;
 using System.Collections.Generic;
-using Parlot;
 
 namespace Shortcodes
 {
@@ -53,7 +53,7 @@ namespace Shortcodes
         {
             if (_scanner.ReadRawText(out var _result))
             {
-                return new RawText(_scanner.Buffer, _result.Start, _result.Length);
+                return new RawText(_scanner.Buffer, _scanner.Cursor.Offset, _result.Length);
             }
 
             return null;
@@ -110,7 +110,7 @@ namespace Shortcodes
                 return null;
             }
 
-            var identifier = _result.GetText();
+            var identifier = new string(_result);
 
             _scanner.SkipWhiteSpace();
 
@@ -128,7 +128,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset + 1, _result.Length - 2)).ToString();
 
                     argumentIndex += 1;
                 }
@@ -136,8 +136,8 @@ namespace Shortcodes
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = _result.GetText();
-                    
+                    var argumentName = new string(_result);
+
                     // It might just be a value
                     if (_scanner.ReadChar('='))
                     {
@@ -147,13 +147,13 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset, _result.Length - 2)).ToString();
                         }
                         else if (_scanner.ReadValue(out _result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = _result.GetText();
+                            arguments[argumentName] = new string(_result);
                         }
                         else
                         {
@@ -165,14 +165,14 @@ namespace Shortcodes
                     else
                     {
                         // Positional argument that looks like an identifier
-                        
+
                         _scanner.Cursor.ResetPosition(argumentStart);
 
                         if (_scanner.ReadValue(out _result))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = _result.GetText();
+                            arguments[argumentIndex.ToString()] = new string(_result);
 
                             argumentIndex += 1;
                         }
@@ -188,7 +188,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = _result.GetText();
+                    arguments[argumentIndex.ToString()] = new string(_result);
 
                     argumentIndex += 1;
                 }
@@ -224,15 +224,15 @@ namespace Shortcodes
             while (_scanner.ReadChar(']'))
             {
                 closeBraces += 1;
-            } 
+            }
 
             shortcode = new Shortcode(
-                identifier, 
-                style, 
-                openBraces, 
-                closeBraces, 
-                start.Offset, 
-                _scanner.Cursor.Position - start - 1, 
+                identifier,
+                style,
+                openBraces,
+                closeBraces,
+                start.Offset,
+                _scanner.Cursor.Position - start - 1,
                 new Arguments(arguments)
                 );
 
