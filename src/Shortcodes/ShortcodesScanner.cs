@@ -1,4 +1,5 @@
 ﻿using Parlot;
+using System;
 
 namespace Shortcodes
 {
@@ -9,7 +10,7 @@ namespace Shortcodes
 
         }
 
-        public bool ReadRawText(out TokenResult result)
+        public bool ReadRawText(out TextSpan result)
         {
             var start = Cursor.Offset;
 
@@ -27,26 +28,26 @@ namespace Shortcodes
 
             if (length == 0)
             {
-                result = TokenResult.Fail();
+                result = null;
                 return false;
             }
 
-            result = TokenResult.Succeed(Buffer, start, Cursor.Offset);
+            result = new TextSpan(Buffer, start, length);
 
             return true;
         } 
 
-        public bool ReadValue(out TokenResult result)
+        public bool ReadValue(out TextSpan result)
         {
             if (Cursor.Match(']') || Cursor.Match('\'') || Cursor.Match('"') || Character.IsWhiteSpaceOrNewLine(Cursor.Current))
             {
-                result = TokenResult.Fail();
+                result = null;
                 return false;
             }
 
             if (Cursor.Match("/]"))
             {
-                result = TokenResult.Fail();
+                result = null;
                 return false;
             }
 
@@ -56,14 +57,14 @@ namespace Shortcodes
             {
                 if (Cursor.Eof)
                 {
-                    result = TokenResult.Fail();
+                    result = null;
                     return false;
                 }
 
                 Cursor.Advance();
             }
 
-            result = TokenResult.Succeed(Buffer, start, Cursor.Offset);
+            result = new TextSpan(Buffer, start, Cursor.Offset - start);
 
             return true;
         }
