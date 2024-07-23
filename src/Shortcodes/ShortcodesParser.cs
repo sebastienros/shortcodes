@@ -110,6 +110,7 @@ namespace Shortcodes
                 return null;
             }
 
+            var startIndex = _scanner.Cursor.Offset;
             var identifier = new string(_result);
 
             _scanner.SkipWhiteSpace();
@@ -128,7 +129,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset + 1, _result.Length - 2)).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, startIndex + 1, _result.Length - 2)).ToString();
 
                     argumentIndex += 1;
                 }
@@ -147,7 +148,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _scanner.Cursor.Offset + 1, _result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, startIndex + 1, _result.Length - 2)).ToString();
                         }
                         else if (_scanner.ReadValue(out _result))
                         {
