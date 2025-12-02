@@ -43,7 +43,7 @@ namespace Shortcodes.Tests
                         break;
 
                     case RawText raw:
-                        _builder.Append($"R({raw.Count})");
+                        _builder.Append($"R({raw.Span.Length})");
                         break;
                 }
             }
@@ -118,7 +118,8 @@ namespace Shortcodes.Tests
 
         [Theory]
         [InlineData("[hello a='b]", "R(12)")]
-        [InlineData("[hello '\\a']", "R(12)")]
+        // \z is not a valid escape sequence
+        [InlineData("[hello '\\z']", "R(12)")]
         public void ShouldIgnoreMalformedArguments(string input, string encoded)
         {
             var nodes = new ShortcodesParser().Parse(input);
@@ -131,8 +132,8 @@ namespace Shortcodes.Tests
         [InlineData("[h a='\\u03A9']", "[h a=Ω]")]
         [InlineData("[h a='\\xe9']", "[h a=é]")]
         [InlineData("[h a='\\xE9']", "[h a=é]")]
-        // This is not a valid string (invalid escape sequence), and not a valid value as it start with '
-        [InlineData("[h a='\\a']", "R(10)")]
+        // This is not a valid string (invalid escape sequence), and not a valid value as it starts with '
+        [InlineData("[h a='\\z']", "R(10)")]
         [InlineData("[h a='\\\\']", "[h a=\\]")]
         [InlineData("[h a='\\\"']", "[h a=\"]")]
         [InlineData("[h a='\\\'']", "[h a=']")]

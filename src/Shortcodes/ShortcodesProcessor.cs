@@ -104,7 +104,7 @@ namespace Shortcodes
                     {
                         var text = node as RawText;
 
-                        sb.Builder.Append(text.Buffer, text.Offset, text.Count);
+                        sb.Builder.Append(text.Span);
                     }
 
                     cursor += 1;
@@ -271,7 +271,7 @@ namespace Shortcodes
             switch (start)
             {
                 case RawText raw:
-                    builder.Append(raw.Buffer, raw.Offset, raw.Count);
+                    builder.Append(raw.Span);
                     return;
 
                 case Shortcode code:

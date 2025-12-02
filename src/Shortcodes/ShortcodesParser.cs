@@ -51,9 +51,9 @@ namespace Shortcodes
 
         private RawText ParseRawText()
         {
-            if (_scanner.ReadRawText(out var _result))
+            if (_scanner.ReadRawText(out var result))
             {
-                return new RawText(_scanner.Buffer, _result.Start, _result.Length);
+                return new RawText(result);
             }
 
             return null;
@@ -110,7 +110,7 @@ namespace Shortcodes
                 return null;
             }
 
-            var identifier = _result.GetText();
+            var identifier = _result.ToString();
 
             _scanner.SkipWhiteSpace();
 
@@ -128,7 +128,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(_result)[1..^1].ToString();
 
                     argumentIndex += 1;
                 }
@@ -136,8 +136,9 @@ namespace Shortcodes
                 {
                     _scanner.SkipWhiteSpace();
 
-                    var argumentName = _result.GetText();
-                    
+                    var argumentName = _result.ToString();
+                    var valueStart = _scanner.Cursor.Offset;
+
                     // It might just be a value
                     if (_scanner.ReadChar('='))
                     {
@@ -147,13 +148,13 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(new TextSpan(_scanner.Buffer, _result.Start + 1, _result.Length - 2)).ToString();
+                            arguments[argumentName] = Character.DecodeString(_result)[1..^1].ToString();
                         }
-                        else if (_scanner.ReadValue(out _result))
+                        else if (_scanner.ReadValue(out var textSpan))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = _result.GetText();
+                            arguments[argumentName] = textSpan.ToString();
                         }
                         else
                         {
@@ -168,11 +169,11 @@ namespace Shortcodes
                         
                         _scanner.Cursor.ResetPosition(argumentStart);
 
-                        if (_scanner.ReadValue(out _result))
+                        if (_scanner.ReadValue(out var textSpan))
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentIndex.ToString()] = _result.GetText();
+                            arguments[argumentIndex.ToString()] = textSpan.ToString();
 
                             argumentIndex += 1;
                         }
@@ -184,11 +185,11 @@ namespace Shortcodes
                         }
                     }
                 }
-                else if (_scanner.ReadValue(out _result))
+                else if (_scanner.ReadValue(out var textSpan))
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = _result.GetText();
+                    arguments[argumentIndex.ToString()] = textSpan.ToString();
 
                     argumentIndex += 1;
                 }

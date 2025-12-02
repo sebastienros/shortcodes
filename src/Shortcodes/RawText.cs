@@ -1,16 +1,17 @@
-﻿namespace Shortcodes
+﻿using Parlot;
+using System;
+
+namespace Shortcodes
 {
     public class RawText : Node
     {
-        public RawText(string buffer, int offset, int count)
+        private readonly TextSpan _textSpan;
+
+        public RawText(TextSpan textSpan)
         {
-            Buffer = buffer;
-            Offset = offset;
-            Count = count;
+            _textSpan = textSpan;
         }
 
-        public string Buffer { get; }
-        public int Offset { get; }
-        public int Count { get; }
+        public ReadOnlySpan<char> Span => _textSpan.Span;
     }
 }
