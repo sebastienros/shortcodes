@@ -128,7 +128,7 @@ namespace Shortcodes
                 {
                     arguments ??= CreateArgumentsDictionary();
 
-                    arguments[argumentIndex.ToString()] = Character.DecodeString(_result)[1..^1].ToString();
+                    arguments[argumentIndex.ToString()] = Character.DecodeString(_result.ToString())[1..^1];
 
                     argumentIndex += 1;
                 }
@@ -137,7 +137,6 @@ namespace Shortcodes
                     _scanner.SkipWhiteSpace();
 
                     var argumentName = _result.ToString();
-                    var valueStart = _scanner.Cursor.Offset;
 
                     // It might just be a value
                     if (_scanner.ReadChar('='))
@@ -148,7 +147,7 @@ namespace Shortcodes
                         {
                             arguments ??= CreateArgumentsDictionary();
 
-                            arguments[argumentName] = Character.DecodeString(_result)[1..^1].ToString();
+                            arguments[argumentName] = Character.DecodeString(_result.ToString())[1..^1];
                         }
                         else if (_scanner.ReadValue(out var textSpan))
                         {

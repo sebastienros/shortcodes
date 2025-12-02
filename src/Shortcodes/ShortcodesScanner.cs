@@ -37,6 +37,43 @@ namespace Shortcodes
             return true;
         } 
 
+        public bool ReadIdentifier(out TextSpan result)
+        {
+            if (!Character.IsIdentifierStart(Cursor.Current))
+            {
+                result = null;
+                return false;
+            }
+
+            var start = Cursor.Offset;
+
+            Cursor.Advance();
+
+            while (Character.IsIdentifierPart(Cursor.Current))
+            {
+                Cursor.Advance();
+            }
+
+            result = new TextSpan(Buffer, start, Cursor.Offset - start);
+
+            return true;
+        }
+
+        public bool ReadQuotedString(out TextSpan result)
+        {
+            var start = Cursor.Position;
+
+            // Use base class method which validates escape sequences
+            if (!base.ReadQuotedString())
+            {
+                result = null;
+                return false;
+            }
+
+            result = new TextSpan(Buffer, start.Offset, Cursor.Offset - start.Offset);
+            return true;
+        }
+
         public bool ReadValue(out TextSpan result)
         {
             if (Cursor.Match(']') || Cursor.Match('\'') || Cursor.Match('"') || Character.IsWhiteSpaceOrNewLine(Cursor.Current))
