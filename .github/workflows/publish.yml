@@ -18,10 +18,9 @@ jobs:
       run: dotnet test -c Release
     - name: Pack with dotnet
       run: |
-        arrTag=(${GITHUB_REF//\// })
-        VERSION="${arrTag[2]}"
-        VERSION="${VERSION#v}"
-        echo "$VERSION"
+        # Strip leading 'v' if present
+        VERSION="${GITHUB_REF_NAME#v}"
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
         dotnet pack --output artifacts --configuration Release -p:Version=$VERSION
     - name: Push with dotnet
       run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
