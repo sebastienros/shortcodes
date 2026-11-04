@@ -9,6 +9,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: release
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
     - uses: actions/checkout@v6
@@ -23,5 +28,10 @@ jobs:
         VERSION="${VERSION#v}"
         echo "$VERSION"
         dotnet pack --output artifacts --configuration Release -p:Version=$VERSION
+    - name: NuGet login
+      uses: NuGet/login@v1
+      id: nuget-login
+      with:
+        user: sebastienros
     - name: Push with dotnet
-      run: dotnet nuget push artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push artifacts/*.nupkg --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
